@@ -354,6 +354,10 @@ private fun WorkspaceSheet(
     // 没有意义，且路径形如 projects/xxx 只会让人发懵，故本地只保留「选择文件夹」这一个入口。
     val createWorkspaceLabel = stringResource(R.string.workspace_new_workspace)
     val canCreateWorkspace = !isLocalMode
+    // 本地模式不展示内部工作区：它由 App 在没有任何可用目录时自动兜底创建（名字固定为 default），
+    // 对用户既不可理解也不可操作。用户添加外部目录后它就不再需要出现在列表里。
+    val visibleWorkspaces =
+        if (isLocalMode) workspaces.filter { it.type != WorkspaceType.INTERNAL } else workspaces
 
     AdaptiveModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -392,7 +396,7 @@ private fun WorkspaceSheet(
                 }
             }
 
-            if (workspaces.isEmpty()) {
+            if (visibleWorkspaces.isEmpty()) {
                 Text(
                     // 本地模式没有「新建」入口，提示应引导去选文件夹，而不是指向不存在的按钮。
                     if (canCreateWorkspace) {
@@ -409,11 +413,12 @@ private fun WorkspaceSheet(
                     modifier = Modifier.heightIn(max = 320.dp),
                     verticalArrangement = Arrangement.spacedBy(Spacing.xs)
                 ) {
-                    items(workspaces, key = { it.name }) { ws ->
+                    items(visibleWorkspaces, key = { it.name }) { ws ->
                         WorkspaceRow(
                             workspace = ws,
                             selected = ws.name == current?.name,
-                            canDelete = workspaces.size > 1,
+                            // 唯一可见项不可删除，避免删空后没有可用工作区。
+                            canDelete = visibleWorkspaces.size > 1,
                             onClick = { onSelect(ws) },
                             onDelete = { pendingDelete = ws }
                         )
