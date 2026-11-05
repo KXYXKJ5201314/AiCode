@@ -263,7 +263,8 @@
     <string name="theme_dynamic_color_unsupported">需要 Android 12 及以上系统</string>
     <string name="settings_background_image">背景图</string>
     <string name="settings_background_image_none">未设置</string>
-    <string name="settings_background_image_alpha">图片不透明度</string>
+    <string name="settings_background_image_alpha">透明度</string>
+    <string name="settings_background_image_alpha_hint">数值越大背景图越清楚，越小越接近纯色</string>
     <string name="settings_background_image_pick">选择图片</string>
     <string name="settings_background_image_remove">移除背景</string>
     <string name="provider_cache_anthropic_title">Anthropic 缓存断点</string>

@@ -264,6 +264,7 @@
     <string name="settings_background_image">Background image</string>
     <string name="settings_background_image_none">None</string>
     <string name="settings_background_image_alpha">Opacity</string>
+    <string name="settings_background_image_alpha_hint">Higher means a clearer background image, lower is closer to a solid color</string>
     <string name="settings_background_image_pick">Pick image</string>
     <string name="settings_background_image_remove">Remove background</string>
     <string name="provider_cache_anthropic_title">Anthropic cache breakpoints</string>

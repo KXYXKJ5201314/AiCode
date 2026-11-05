@@ -38,10 +38,10 @@ class BackgroundSettingsRepository @Inject constructor(
         /**
          * 壁纸模式下图片不透明度上限。
          *
-         * 图片位于内容下方，不再遮挡文字，所以可以接近全不透明；保留一点余量是为了
-         * 让图片与主题色轻微融合，避免整屏变成纯照片、UI 边界消失。
+         * 图片位于内容下方，不再遮挡文字，所以可以全不透明；让「滑块拉满 = 图片完全
+         * 清晰可见」，用户想要多清楚都能给到位。
          */
-        const val MAX_ALPHA = 0.95f
+        const val MAX_ALPHA = 1.0f
         /** 最小透明度：0 表示完全透明（背景不可见）。 */
         const val MIN_ALPHA = 0f
         private val IMAGE_PATH_KEY = stringPreferencesKey("background_image_path")
@@ -60,11 +60,11 @@ class BackgroundSettingsRepository @Inject constructor(
          *
          * 图片越明显遮罩越薄，保证「拉到 100% 图片就清楚可见」；图片越淡遮罩越厚，
          * 此时本来就接近纯色背景，遮罩厚一些也不影响观感，反而让配色更统一。
-         * 下限 0.35 是为了即便图片全显示也仍有基础对比度。
+         * 滑块拉满时遮罩只剩 0.23，只留最基本的对比度托底，不再把图片压灰。
          */
         fun scrimAlphaFor(imageAlpha: Float): Float {
             val t = (imageAlpha / MAX_ALPHA).coerceIn(0f, 1f)
-            return 0.85f - 0.50f * t
+            return 0.85f - 0.62f * t
         }
     }
 

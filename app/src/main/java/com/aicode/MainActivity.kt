@@ -267,7 +267,9 @@ class MainActivity : ComponentActivity() {
                 // 不拦截触摸事件；弹窗（Dialog 独立窗口）不受层级影响。
                 val bgPath by backgroundSettings.imagePathFlow.collectAsStateWithLifecycle(initialValue = null)
                 val bgAlpha by backgroundSettings.alphaFlow.collectAsStateWithLifecycle(initialValue = BackgroundSettingsRepository.DEFAULT_ALPHA)
-                val wallpaperActive = bgPath != null && bgAlpha > 0f
+                // 聊天页要求纯色背景，不显示壁纸（由 AppNavigation 回调回传）。
+                var chatPageActive by remember { mutableStateOf(false) }
+                val wallpaperActive = bgPath != null && bgAlpha > 0f && !chatPageActive
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     // 有背景图时透明，让壁纸层透出来；无背景图时就是主题背景色。
@@ -313,7 +315,8 @@ class MainActivity : ComponentActivity() {
                         AgreementGate(repository = agreementRepository) { agreementAccepted ->
                             AppNavigation(
                                 onboardingRepository = onboardingRepository,
-                                agreementAccepted = agreementAccepted
+                                agreementAccepted = agreementAccepted,
+                                onChatPageActive = { chatPageActive = it }
                             )
                             if (agreementAccepted) {
                                 // 全局凭据弹窗：覆盖所有页面，命令行 git 缺凭据在任意页面都能弹。
@@ -377,7 +380,12 @@ private const val MAX_PANE_SPLIT = 0.7f
 @Composable
 fun AppNavigation(
     onboardingRepository: com.aicode.feature.onboarding.data.OnboardingRepository,
-    agreementAccepted: Boolean
+    agreementAccepted: Boolean,
+    /**
+     * 聊天页是否在前台。聊天页要求纯色背景（不显示全局壁纸），
+     * 但壁纸画在本组件**外面**、拿不到路由，所以这里把状态回传给调用方。
+     */
+    onChatPageActive: (Boolean) -> Unit = {}
 ) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -390,6 +398,8 @@ fun AppNavigation(
     // 记录当前路由到全局，崩溃报告用它定位崩溃页面。
     LaunchedEffect(currentRoute) {
         AIEditorApp.currentRoute = currentRoute
+        // 聊天页不显示全局壁纸：把状态回传给壁纸层（它在本组件外面）。
+        onChatPageActive(currentRoute == "chat")
     }
 
     // Activity 级别的 ViewModel——Drawer 和 AIChatPanel 共享同一个实例。

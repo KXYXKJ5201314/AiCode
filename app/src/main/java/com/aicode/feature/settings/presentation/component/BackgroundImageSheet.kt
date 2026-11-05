@@ -155,6 +155,12 @@ internal fun BackgroundImageSheet(
                 },
                 valueRange = 0f..100f
             )
+            // 明确方向：数值越大图片越清楚，越小越接近纯色背景。
+            Text(
+                text = stringResource(R.string.settings_background_image_alpha_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             Row(
                 modifier = Modifier
