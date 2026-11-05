@@ -127,12 +127,17 @@ internal fun AppPermissionsSection(
                 subtitle = stringResource(R.string.settings_permission_storage_desc),
                 onClick = {
                     if (!storageGranted) {
-                        storageLauncher.launch(
-                            arrayOf(
-                                Manifest.permission.READ_EXTERNAL_STORAGE,
-                                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        // Android 11+ 无法用运行时权限授予存储根目录访问，必须去「所有文件访问」设置页。
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            openAllFilesAccessSettingsForPermission(context)
+                        } else {
+                            storageLauncher.launch(
+                                arrayOf(
+                                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                )
                             )
-                        )
+                        }
                     }
                 },
                 trailing = { PermissionStatusText(allowed = storageGranted) }
@@ -413,8 +418,33 @@ private fun PermissionStatusText(allowed: Boolean) {
 }
 
 private fun checkStorageGranted(context: android.content.Context): Boolean =
-    ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED ||
-        ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    com.aicode.feature.settings.presentation.component.checkStorageAccess(context)
+
+/**
+ * 跳转系统「所有文件访问」设置页（Android 11+）。
+ *
+ * 优先带包名的 Intent，部分 ROM 不认时退回全局页，再退回应用详情页。
+ */
+private fun openAllFilesAccessSettingsForPermission(context: android.content.Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val direct = Intent(
+            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+            Uri.parse("package:${context.packageName}")
+        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (runCatching { context.startActivity(direct) }.isSuccess) return
+        val global = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (runCatching { context.startActivity(global) }.isSuccess) return
+    }
+    runCatching {
+        context.startActivity(
+            Intent(
+                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:${context.packageName}")
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }
+}
 
 private fun isIgnoringBatteryOptimizations(context: android.content.Context): Boolean {
     val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as PowerManager

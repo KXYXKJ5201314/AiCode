@@ -377,6 +377,8 @@
     <string name="storage_permission_grant">Grant now</string>
     <string name="storage_permission_open_settings">Open settings</string>
     <string name="storage_permission_later">Later</string>
+    <string name="storage_permission_prompt_desc_all_files">Android 11 and above requires the "All files access" permission to read and write device folders. Tap the button below and enable it on the settings page.</string>
+    <string name="storage_permission_all_files_hint">Tip: look for "All files access" or "Manage all files" on that page.</string>
     <!-- Settings category titles -->
     <string name="settings_category_ai">AI Configuration</string>
     <string name="settings_category_environment">Environment</string>

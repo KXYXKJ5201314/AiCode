@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,66 +47,63 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Folder
 
 /**
- * 启动时自动检查并申请「存储空间」权限的弹窗。
+ * 启动时自动检查并引导开启「所有文件访问权限」。
  *
- * ### 为什么需要它
+ * ### 为什么必须是 MANAGE_EXTERNAL_STORAGE
  *
- * 本项目 targetSdk = 28，外部工作区、容器镜像、日志导出等功能都依赖
- * READ/WRITE_EXTERNAL_STORAGE 直读 `/storage/emulated/0`。权限未授予时这些功能会静默失败
- * （例如添加外部目录时写入探测失败），而用户通常不知道要去「设置 → 软件权限」里手动开启。
+ * 本项目 targetSdk = 28，原本靠 READ/WRITE_EXTERNAL_STORAGE 直读 `/storage/emulated/0`。
+ * 但从 **Android 11（API 30）** 起，系统对存储根目录的访问做了硬限制：即使 targetSdk < 30
+ * 走兼容模式，`/sdcard` 全盘读写依然被拒，且这两个权限在 11+ 上**不会弹出授权框**，
+ * 授权后也没有实际能力（表现为「设置页里永远显示未授权、点了没反应」）。
  *
- * 因此在进入主页时主动弹一次，把「为什么需要」和「怎么给」说清楚，而不是等用户踩坑。
+ * Android 11+ 读全盘的唯一途径是 `MANAGE_EXTERNAL_STORAGE`，它**无法用运行时弹窗授予**，
+ * 必须由用户在系统设置「所有文件访问」里手动开启。因此本弹窗只负责：
+ * 1. 说清楚为什么需要；
+ * 2. 一键跳到对应的系统设置页；
+ * 3. 用户返回后自动复查，已开启则消失。
  *
- * ### 何时不弹
+ * ### 版本分支
  *
- * - 权限已授予；
- * - 用户选过「不再提示」（持久化在 SharedPreferences，可随时在设置页手动授权）；
- * - Android 10+ 且 targetSdk 28 仍走传统存储，权限依然有效，故不区分版本。
- *
- * ### 永久拒绝的处理
- *
- * 系统不再弹授权框时（`shouldShowRequestPermissionRationale` 为 false 且未授予），
- * 仅靠 launcher 无法解决，必须引导到系统设置页手动开启。
+ * - Android 11+：检测 `Environment.isExternalStorageManager()`，引导跳设置页。
+ * - Android 6–10：MANAGE_EXTERNAL_STORAGE 不存在，退回运行时权限申请流程。
+ * - Android 6 以下：安装即授，无需处理。
  */
 @Composable
 internal fun StoragePermissionPrompt() {
     val context = LocalContext.current
-    var granted by remember { mutableStateOf(checkStoragePermission(context)) }
+    var granted by remember { mutableStateOf(checkStorageAccess(context)) }
     var showDialog by remember { mutableStateOf(false) }
-    var permanentlyDenied by remember { mutableStateOf(false) }
 
-    // 从系统设置页返回后重新检查，已授权则自动关闭弹窗。
+    // 从系统设置页返回后复查，已开启则自动关闭弹窗。
     LifecycleResumeEffect(Unit) {
-        granted = checkStoragePermission(context)
+        granted = checkStorageAccess(context)
         if (granted) showDialog = false
         onPauseOrDispose { }
     }
 
-    val launcher = rememberLauncherForActivityResult(
+    // Android 6–10 的运行时权限申请（11+ 不适用，见 checkStorageAccess）。
+    val legacyLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
-        granted = checkStoragePermission(context)
-        if (granted) {
-            showDialog = false
-        } else {
-            // 系统不再弹框（永久拒绝）→ 提示去设置页手动开启。
-            permanentlyDenied = !shouldShowStorageRationale(context)
-        }
+        granted = checkStorageAccess(context)
+        if (granted) showDialog = false
     }
 
-    // 首帧判断：未授权且用户没勾过「不再提示」才弹。
+    // 首帧判断：未授权且用户没选过「以后再说」才弹。
     LaunchedEffect(Unit) {
-        if (!checkStoragePermission(context) && !isPromptDismissed(context)) {
+        if (!checkStorageAccess(context) && !isPromptDismissed(context)) {
             showDialog = true
         }
     }
 
     if (!showDialog) return
 
+    val needsSettingsPage = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+
     AlertDialog(
         onDismissRequest = { showDialog = false },
         icon = {
-            androidx.compose.material3.Icon(
+            Icon(
                 FeatherIcons.Folder,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
@@ -120,11 +119,14 @@ internal fun StoragePermissionPrompt() {
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 Text(
-                    text = stringResource(R.string.storage_permission_prompt_desc),
+                    text = stringResource(
+                        if (needsSettingsPage) R.string.storage_permission_prompt_desc_all_files
+                        else R.string.storage_permission_prompt_desc
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                // 需要授权的具体用途，让用户知道这不是无理索取。
+                // 具体用途，让用户知道这不是无理索取。
                 Surface(
                     shape = RoundedCornerShape(Radius.mdLarge),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
@@ -139,22 +141,23 @@ internal fun StoragePermissionPrompt() {
                         PermissionUsageRow(stringResource(R.string.storage_permission_use_export))
                     }
                 }
-                if (permanentlyDenied) {
+                if (needsSettingsPage) {
                     Text(
-                        text = stringResource(R.string.settings_permission_storage_denied_desc),
+                        text = stringResource(R.string.storage_permission_all_files_hint),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = {
-                if (permanentlyDenied) {
-                    openAppSettings(context)
-                    showDialog = false
+                if (needsSettingsPage) {
+                    // 设置页返回时由 LifecycleResumeEffect 复查；这里不立即关闭，
+                    // 否则用户没真正开启就看不到复查结果。
+                    openAllFilesAccessSettings(context)
                 } else {
-                    launcher.launch(
+                    legacyLauncher.launch(
                         arrayOf(
                             Manifest.permission.READ_EXTERNAL_STORAGE,
                             Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -164,7 +167,7 @@ internal fun StoragePermissionPrompt() {
             }) {
                 Text(
                     stringResource(
-                        if (permanentlyDenied) R.string.storage_permission_open_settings
+                        if (needsSettingsPage) R.string.storage_permission_open_settings
                         else R.string.storage_permission_grant
                     )
                 )
@@ -202,21 +205,22 @@ private fun PermissionUsageRow(text: String) {
 private const val PREFS_NAME = "storage_permission_prompt"
 private const val KEY_DISMISSED = "dismissed"
 
-/** 是否已授予存储权限（读写任一即可，与设置页判定一致）。 */
-internal fun checkStoragePermission(context: Context): Boolean =
-    ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) ==
-        PackageManager.PERMISSION_GRANTED ||
-        ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-        PackageManager.PERMISSION_GRANTED
-
-/** 系统是否还会展示授权说明弹窗；false 且未授权即为永久拒绝。 */
-private fun shouldShowStorageRationale(context: Context): Boolean {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return false
-    val activity = context as? android.app.Activity ?: return false
-    return androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(
-        activity,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
-    )
+/**
+ * 是否已具备存储访问能力。
+ *
+ * - Android 11+：只看 `Environment.isExternalStorageManager()`。此版本下
+ *   READ/WRITE_EXTERNAL_STORAGE 始终报「已授予」却无实际能力，不能用它判断。
+ * - Android 6–10：沿用运行时权限判定（读写任一即可）。
+ * - Android 6 以下：安装即授。
+ */
+internal fun checkStorageAccess(context: Context): Boolean = when {
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> Environment.isExternalStorageManager()
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
+        ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) ==
+            PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+            PackageManager.PERMISSION_GRANTED
+    else -> true
 }
 
 private fun prefs(context: Context): SharedPreferences =
@@ -226,18 +230,32 @@ private fun prefs(context: Context): SharedPreferences =
 internal fun isPromptDismissed(context: Context): Boolean =
     prefs(context).getBoolean(KEY_DISMISSED, false)
 
-/** 记录「以后再说」，之后不再自动弹（设置页仍可手动授权）。 */
+/** 记录「以后再说」，之后不再自动弹（设置页仍可手动开启）。 */
 internal fun setPromptDismissed(context: Context) {
     prefs(context).edit().putBoolean(KEY_DISMISSED, true).apply()
 }
 
-/** 清除「以后再说」标记，下次进入主页会重新提示（用于用户主动重置）。 */
+/** 清除「以后再说」标记，下次进入主页会重新提示。 */
 internal fun resetPromptDismissed(context: Context) {
     prefs(context).edit().remove(KEY_DISMISSED).apply()
 }
 
-/** 跳转到本应用的系统设置页，供用户手动开启权限。 */
-private fun openAppSettings(context: Context) {
+/**
+ * 跳到系统「所有文件访问」设置页。
+ *
+ * 优先用带包名的 Intent（部分 ROM 不认全局页）；失败时退回全局页，再失败退回应用详情页。
+ */
+private fun openAllFilesAccessSettings(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val direct = Intent(
+            Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+            Uri.parse("package:${context.packageName}")
+        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (runCatching { context.startActivity(direct) }.isSuccess) return
+        val global = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (runCatching { context.startActivity(global) }.isSuccess) return
+    }
     runCatching {
         context.startActivity(
             Intent(
