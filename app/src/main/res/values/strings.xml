@@ -1795,8 +1795,8 @@
     <string name="workspace_switch_confirm">切换工作区会停止当前工作区所有正在运行的 AI 会话并关闭终端标签。确定要切换吗？</string>
     <string name="workspace_confirm">确定</string>
     <string name="workspace_open">打开工作区</string>
-    <string name="workspace_new_internal">新建内部工作区</string>
     <string name="workspace_empty_hint">暂无工作区，点击「%1$s」创建一个</string>
+    <string name="workspace_empty_hint_local">暂无工作区，点击右上角「添加外部工作区」选择手机上的项目目录</string>
     <string name="workspace_delete">删除工作区</string>
     <string name="workspace_delete_confirm">确定删除「%1$s」？该目录下的所有文件及该工作区的聊天记录都将被删除，且无法恢复。</string>
     <string name="workspace_new_workspace">新建工作区</string>

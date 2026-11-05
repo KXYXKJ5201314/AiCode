@@ -350,9 +350,10 @@ private fun WorkspaceSheet(
     val sheetState = rememberModalBottomSheetState()
     var showCreateDialog by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<Workspace?>(null) }
-    val createWorkspaceLabel = stringResource(
-        if (isLocalMode) R.string.workspace_new_internal else R.string.workspace_new_workspace
-    )
+    // 只有远程模式还保留「新建工作区」：本地模式的内部工作区（App 私有目录）对普通用户
+    // 没有意义，且路径形如 projects/xxx 只会让人发懵，故本地只保留「选择文件夹」这一个入口。
+    val createWorkspaceLabel = stringResource(R.string.workspace_new_workspace)
+    val canCreateWorkspace = !isLocalMode
 
     AdaptiveModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -382,16 +383,23 @@ private fun WorkspaceSheet(
                         Text(stringResource(R.string.workspace_add_external))
                     }
                 }
-                TextButton(onClick = { showCreateDialog = true }) {
-                    Icon(FeatherIcons.Plus, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(Spacing.xs))
-                    Text(createWorkspaceLabel)
+                if (canCreateWorkspace) {
+                    TextButton(onClick = { showCreateDialog = true }) {
+                        Icon(FeatherIcons.Plus, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(Spacing.xs))
+                        Text(createWorkspaceLabel)
+                    }
                 }
             }
 
             if (workspaces.isEmpty()) {
                 Text(
-                    stringResource(R.string.workspace_empty_hint, createWorkspaceLabel),
+                    // 本地模式没有「新建」入口，提示应引导去选文件夹，而不是指向不存在的按钮。
+                    if (canCreateWorkspace) {
+                        stringResource(R.string.workspace_empty_hint, createWorkspaceLabel)
+                    } else {
+                        stringResource(R.string.workspace_empty_hint_local)
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = Spacing.md)
@@ -468,8 +476,10 @@ private fun WorkspaceRow(
 ) {
     val external = workspace.type == WorkspaceType.EXTERNAL_LOCAL
     val disabled = !workspace.available
+    // 内部工作区是 App 私有目录下的 projects/<名字>，路径对用户毫无用处也不可操作，
+    // 直接不显示。只有用户自己选的外部目录（和远程目录）才展示路径。
     val displayPath = when (workspace.type) {
-        WorkspaceType.INTERNAL -> "projects/${workspace.name}"
+        WorkspaceType.INTERNAL -> null
         WorkspaceType.EXTERNAL_LOCAL, WorkspaceType.REMOTE -> workspace.path
     }
     Row(
@@ -500,17 +510,19 @@ private fun WorkspaceRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Text(
-                text = displayPath,
-                style = MaterialTheme.typography.bodySmall,
-                color = when {
-                    disabled -> MaterialTheme.colorScheme.onSurfaceVariant
-                    selected -> MaterialTheme.colorScheme.primary
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            displayPath?.let { path ->
+                Text(
+                    text = path,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = when {
+                        disabled -> MaterialTheme.colorScheme.onSurfaceVariant
+                        selected -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             if (external && disabled) {
                 Text(
                     text = stringResource(R.string.workspace_external_unavailable_hint),

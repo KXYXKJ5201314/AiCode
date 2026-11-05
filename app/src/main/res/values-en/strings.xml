@@ -1796,8 +1796,8 @@
     <string name="workspace_switch_confirm">Switching workspace will stop all running AI sessions and close terminal tabs in the current workspace. Continue?</string>
     <string name="workspace_confirm">Confirm</string>
     <string name="workspace_open">Open Workspace</string>
-    <string name="workspace_new_internal">New Internal Workspace</string>
     <string name="workspace_empty_hint">No workspaces, tap %1$s to create one</string>
+    <string name="workspace_empty_hint_local">No workspaces yet. Tap "Add External Workspace" at the top right to pick a project folder on your device.</string>
     <string name="workspace_delete">Delete Workspace</string>
     <string name="workspace_delete_confirm">Delete "%1$s"? All files in this directory and this workspace\'s chats will be deleted and cannot be undone.</string>
     <string name="workspace_new_workspace">New Workspace</string>
