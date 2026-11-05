@@ -1914,10 +1914,16 @@ class AIAgentViewModel @Inject constructor(
                     ?.let { agentDefinitionRepository.findIncludingDisabled(it) }
             }
 
+            // 会话级工作区优先：每个会话可选择自己的开发目录，未绑定（空串）时才回退全局工作区。
+            // 这使 AI 的读写/搜索/命令都落在该会话自己的目录内，而不是跟随全局当前工作区。
+            val effectiveProjectRoot = sessionEntity?.workspacePath
+                ?.takeIf { it.isNotBlank() }
+                ?: projectRoot
+
             val agentContext = AgentContext(
                 currentFile = currentFile,
                 selectedCode = selectedCode,
-                projectRoot = projectRoot,
+                projectRoot = effectiveProjectRoot,
                 language = currentFile?.let { detectLanguage(it) },
                 history = history,
                 inputImages = inputImages,

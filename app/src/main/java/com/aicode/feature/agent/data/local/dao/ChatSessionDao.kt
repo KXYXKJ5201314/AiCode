@@ -74,6 +74,10 @@ interface ChatSessionDao {
     @Query("UPDATE chat_sessions SET providerId = :providerId, model = :model, lastInputTokens = 0 WHERE id = :id")
     suspend fun updateProviderModel(id: String, providerId: String?, model: String?)
 
+    /** 改绑会话自己的工作区（每个会话独立选择开发目录）。 */
+    @Query("UPDATE chat_sessions SET workspacePath = :workspacePath, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateWorkspacePath(id: String, workspacePath: String, updatedAt: Long)
+
     @Query("UPDATE chat_sessions SET reasoningEffort = :effort WHERE id = :id")
     suspend fun updateReasoningEffort(id: String, effort: String)
 

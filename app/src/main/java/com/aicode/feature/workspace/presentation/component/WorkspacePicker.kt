@@ -115,6 +115,9 @@ fun WorkspaceChip(
 
 /**
  * 顶栏的工作区选择图标按钮：点击弹出选择/新建/删除面板。
+ *
+ * @param onWorkspacePicked 非空时表示「会话级选择」：选中某工作区后调用它而不是切换全局工作区。
+ *   这样每个会话可以有自己的开发目录，不影响其他会话；为 null 时保持原全局切换行为。
  */
 @Composable
 fun WorkspaceIconButton(
@@ -122,7 +125,10 @@ fun WorkspaceIconButton(
     hasRunningSessions: () -> Boolean = { false },
     onSwitchConfirmed: () -> Unit = {},
     modifier: Modifier = Modifier,
-    iconSize: Dp = 24.dp
+    iconSize: Dp = 24.dp,
+    onWorkspacePicked: ((Workspace) -> Unit)? = null,
+    /** 会话级模式下当前会话绑定的工作区（用于面板里打勾）；null 表示用全局当前工作区。 */
+    sessionWorkspace: Workspace? = null
 ) {
     var showSheet by remember { mutableStateOf(false) }
 
@@ -153,7 +159,9 @@ fun WorkspaceIconButton(
         onDismiss = { showSheet = false },
         viewModel = viewModel,
         hasRunningSessions = hasRunningSessions,
-        onSwitchConfirmed = onSwitchConfirmed
+        onSwitchConfirmed = onSwitchConfirmed,
+        onWorkspacePicked = onWorkspacePicked,
+        sessionWorkspace = sessionWorkspace
     )
 }
 
@@ -168,10 +176,14 @@ private fun WorkspaceSelectionHost(
     onDismiss: () -> Unit,
     viewModel: WorkspaceViewModel,
     hasRunningSessions: () -> Boolean,
-    onSwitchConfirmed: () -> Unit
+    onSwitchConfirmed: () -> Unit,
+    onWorkspacePicked: ((Workspace) -> Unit)? = null,
+    sessionWorkspace: Workspace? = null
 ) {
     val workspaces by viewModel.workspaces.collectAsStateWithLifecycle()
-    val current by viewModel.current.collectAsStateWithLifecycle()
+    val globalCurrent by viewModel.current.collectAsStateWithLifecycle()
+    // 会话级模式下，面板里打勾的是该会话绑定的工作区；否则是全局当前工作区。
+    val current = if (onWorkspacePicked != null) (sessionWorkspace ?: globalCurrent) else globalCurrent
     val isLocalMode by viewModel.isLocalMode.collectAsStateWithLifecycle()
     val addError by viewModel.addError.collectAsStateWithLifecycle()
     val externalWarningDismissed by viewModel.externalWarningDismissed.collectAsStateWithLifecycle()
@@ -182,6 +194,17 @@ private fun WorkspaceSelectionHost(
     var dontShowExternalWarningAgain by remember { mutableStateOf(false) }
 
     fun select(ws: Workspace) {
+        // 会话级选择：只改当前会话绑定的工作区，不动全局，其他会话不受影响。
+        if (onWorkspacePicked != null) {
+            if (hasRunningSessions()) {
+                // 该会话正在跑 AI：先确认（确认后由调用方停止任务再改绑）。
+                pendingWorkspaceSelect = ws
+            } else {
+                onWorkspacePicked.invoke(ws)
+                onDismiss()
+            }
+            return
+        }
         if (hasRunningSessions()) {
             pendingWorkspaceSelect = ws
         } else {
@@ -296,7 +319,9 @@ private fun WorkspaceSelectionHost(
             confirmButton = {
                 TextButton(onClick = {
                     onSwitchConfirmed()
-                    viewModel.selectWorkspace(ws.name)
+                    // 会话级：只改绑当前会话；全局模式：切换全局工作区。
+                    if (onWorkspacePicked != null) onWorkspacePicked.invoke(ws)
+                    else viewModel.selectWorkspace(ws.name)
                     pendingWorkspaceSelect = null
                     onDismiss()
                 }) { Text(stringResource(R.string.workspace_confirm)) }

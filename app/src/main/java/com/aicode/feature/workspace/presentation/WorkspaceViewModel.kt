@@ -20,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class WorkspaceViewModel @Inject constructor(
     private val repository: WorkspaceRepository,
-    private val executionModeHolder: ExecutionModeHolder
+    private val executionModeHolder: ExecutionModeHolder,
+    private val sessionUseCase: com.aicode.feature.agent.domain.session.SessionUseCase
 ) : ViewModel() {
 
     val workspaces: StateFlow<List<Workspace>> = repository.workspaces
@@ -66,6 +67,11 @@ class WorkspaceViewModel @Inject constructor(
 
     fun selectWorkspace(name: String) = viewModelScope.launch {
         runCatching { repository.selectWorkspace(name) }
+    }
+
+    /** 把指定会话改绑到 [workspacePath]（每个会话独立工作区），不影响全局与其他会话。 */
+    fun bindSessionWorkspace(sessionId: String, workspacePath: String) = viewModelScope.launch {
+        runCatching { sessionUseCase.updateSessionWorkspace(sessionId, workspacePath) }
     }
 
     fun createWorkspace(name: String, onResult: (Workspace?) -> Unit = {}) = viewModelScope.launch {

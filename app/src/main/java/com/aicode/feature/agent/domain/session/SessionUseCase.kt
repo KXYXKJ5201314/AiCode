@@ -182,6 +182,25 @@ class SessionUseCase @Inject constructor(
         chatSessionDao.touch(sessionId, timestamp)
     }
 
+    /**
+     * 改绑指定会话自己的工作区（每个会话独立选择开发目录）。
+     *
+     * 只影响该会话后续的 AI 请求，不改全局当前工作区——其他会话保持原目录。
+     *
+     * @return 是否修改成功（会话不存在时返回 false）。
+     */
+    suspend fun updateSessionWorkspace(sessionId: String, workspacePath: String): Boolean {
+        val session = chatSessionDao.getSessionById(sessionId) ?: return false
+        if (session.workspacePath == workspacePath) return true
+        chatSessionDao.updateWorkspacePath(
+            id = sessionId,
+            workspacePath = workspacePath,
+            updatedAt = System.currentTimeMillis()
+        )
+        FileLogger.i(TAG, "会话工作区已改绑: session=$sessionId -> $workspacePath")
+        return true
+    }
+
     suspend fun getSessionById(id: String): ChatSessionEntity? {
         return chatSessionDao.getById(id)
     }

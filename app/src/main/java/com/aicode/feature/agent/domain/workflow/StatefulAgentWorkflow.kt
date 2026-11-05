@@ -121,6 +121,7 @@ class StatefulAgentWorkflow @Inject constructor(
     private val agentNotificationCenter: AgentNotificationCenter,
     private val eventInjector: AgentEventInjector,
     private val fileAccess: FileAccessProvider,
+    private val pathMapper: com.aicode.feature.workspace.domain.WorkspacePathMapper,
     @param:ApplicationContext private val appContext: Context
 ) : AgentWorkflow {
 
@@ -785,25 +786,29 @@ class StatefulAgentWorkflow @Inject constructor(
                         val runResults = if (toolCalls.isEmpty()) {
                             emptyList()
                         } else {
-                            coroutineScope {
-                                val pathLocks = ConcurrentHashMap<String, Mutex>()
-                                toolCalls.map { toolCall ->
-                                    async {
-                                        val run: suspend () -> ToolRunResult = {
-                                            val tool = toolRegistry.getTool(toolCall.name)
-                                            if (tool is StreamingAgentTool) {
-                                                runToolStream(tool, toolCall, currentContext) { send(it) }
-                                            } else {
-                                                runToolSync(tool, toolCall, currentContext)
+                            // 整批工具都在「本会话工作区」作用域内执行：文件工具的路径映射据此解析 ~/workspace，
+                            // 而不是跟随全局当前工作区。同一工作区内部可并发（同一会话/子代理/同批工具）。
+                            pathMapper.runWithWorkspacePath(currentContext.projectRoot) {
+                                coroutineScope {
+                                    val pathLocks = ConcurrentHashMap<String, Mutex>()
+                                    toolCalls.map { toolCall ->
+                                        async {
+                                            val run: suspend () -> ToolRunResult = {
+                                                val tool = toolRegistry.getTool(toolCall.name)
+                                                if (tool is StreamingAgentTool) {
+                                                    runToolStream(tool, toolCall, currentContext) { send(it) }
+                                                } else {
+                                                    runToolSync(tool, toolCall, currentContext)
+                                                }
                                             }
+                                            // 同一批里针对同一路径的调用必须串行：并行会让「读-改-写」互相覆盖，
+                                            // 并让写入方的回读校验看到别人的内容而误报失败。不同路径仍并行。
+                                            val path = (toolCall.arguments["path"] as? JsonPrimitive)?.contentOrNull
+                                            if (path.isNullOrBlank()) run()
+                                            else pathLocks.computeIfAbsent(path) { Mutex() }.withLock { run() }
                                         }
-                                        // 同一批里针对同一路径的调用必须串行：并行会让「读-改-写」互相覆盖，
-                                        // 并让写入方的回读校验看到别人的内容而误报失败。不同路径仍并行。
-                                        val path = (toolCall.arguments["path"] as? JsonPrimitive)?.contentOrNull
-                                        if (path.isNullOrBlank()) run()
-                                        else pathLocks.computeIfAbsent(path) { Mutex() }.withLock { run() }
-                                    }
-                                }.awaitAll()
+                                    }.awaitAll()
+                                }
                             }
                         }
 

@@ -97,12 +97,23 @@ class ExecuteCommandTool @Inject constructor(
     }
 
     override suspend fun execute(args: Map<String, JsonElement>): ToolResult {
+        return runCommand(args, workspaceRepository.currentPath())
+    }
+
+    /**
+     * 有会话上下文的执行路径（`StatefulAgentWorkflow` 走这条）：在当前**会话自己的工作区**里执行，
+     * 而不是全局当前工作区，使「每个会话独立工作区」生效。
+     */
+    override suspend fun executeWithContext(
+        args: Map<String, JsonElement>,
+        context: com.aicode.feature.agent.domain.model.AgentContext
+    ): ToolResult = runCommand(args, context.projectRoot)
+
+    private suspend fun runCommand(args: Map<String, JsonElement>, workdir: String): ToolResult {
         val command = args["command"]?.jsonPrimitive?.contentOrNull
             ?: return ToolResult.Error("缺少必需参数：command")
 
         return try {
-            // 在当前工作区目录内执行，与文件工具保持同一根目录
-            val workdir = workspaceRepository.currentPath()
             val timeoutMs = resolveTimeoutMs(args)
             FileLogger.d(TAG, "execute_command (timeout=${timeoutMs}ms): $command")
             val output = commandEngine.runCommandSync(command, workdir, timeoutMs)
@@ -134,7 +145,8 @@ class ExecuteCommandTool @Inject constructor(
         // 限幅累积：喂回模型的最终结果只保留开头+结尾，避免超大输出撑爆上下文。
         val accumulated = BoundedOutput()
         try {
-            val workdir = workspaceRepository.currentPath()
+            // 搜索/命令根目录取会话自己的工作区（每条会话独立），而非全局当前工作区。
+            val workdir = context.projectRoot
             val timeoutMs = resolveTimeoutMs(args)
             FileLogger.d(TAG, "execute_command(流式, timeout=${timeoutMs}ms): $command")
             commandEngine.runCommandStream(command, workdir, timeoutMs).collect { event ->

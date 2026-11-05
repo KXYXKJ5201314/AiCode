@@ -31,6 +31,12 @@ class SearchCodeTool @Inject constructor(
     private companion object {
         const val TAG = "SearchTool"
         const val SEARCH_TIMEOUT_MS = 30_000L
+
+        /**
+         * 允许搜索的容器根路径集合：`~/workspace`（AI 视角）与展开后的 `/root/workspace`。
+         * 两者都收录是为了兼容模型直接写绝对路径的情况。
+         */
+        val WORKSPACE_ROOT_TOKENS = listOf("~/workspace", "/root/workspace")
     }
 
     override val name = "search"
@@ -48,6 +54,19 @@ class SearchCodeTool @Inject constructor(
     )
 
     override suspend fun execute(args: Map<String, JsonElement>): ToolResult {
+        return runSearch(args, workspaceRepository.currentPath())
+    }
+
+    /**
+     * 有会话上下文的执行路径（`StatefulAgentWorkflow` 走这条）：搜索根目录取**会话自己的工作区**，
+     * 而不是全局当前工作区，使「每个会话独立工作区」生效。
+     */
+    override suspend fun executeWithContext(
+        args: Map<String, JsonElement>,
+        context: com.aicode.feature.agent.domain.model.AgentContext
+    ): ToolResult = runSearch(args, context.projectRoot)
+
+    private suspend fun runSearch(args: Map<String, JsonElement>, projectPath: String): ToolResult {
         return try {
             val rawArgs = args["args"]?.jsonPrimitive?.contentOrNull?.trim().orEmpty()
             if (rawArgs.isEmpty()) return ToolResult.Error("缺少必需参数：args", "MISSING_ARGS")
@@ -56,13 +75,25 @@ class SearchCodeTool @Inject constructor(
                 ?: return ToolResult.Error("args 中存在未闭合的引号", "INVALID_ARGS")
             if (tokens.isEmpty()) return ToolResult.Error("缺少必需参数：args", "MISSING_ARGS")
 
+            // 禁止跨工作区搜索：路径 token 必须落在当前工作区内（相对路径视为工作区内）。
+            findOutOfWorkspacePath(
+                tokens = tokens,
+                workspaceRoots = WORKSPACE_ROOT_TOKENS,
+                home = pathHomeResolver.home()
+            )?.let { escaped ->
+                return ToolResult.Error(
+                    "搜索范围仅限当前工作区，禁止搜索工作区外路径：$escaped（请改用 `~/workspace` 或其子目录）",
+                    "PATH_OUTSIDE_WORKSPACE"
+                )
+            }
+
             val command = buildSearchCommand(tokens, pathHomeResolver.home())
                 ?: return ToolResult.Error("search 仅支持 | head [-n N] 截断输出，不支持其它管道命令", "INVALID_PIPE")
 
             val startedAt = System.currentTimeMillis()
             val result = commandEngine.runCommandSyncIfReady(
                 command = command,
-                projectPath = workspaceRepository.currentPath(),
+                projectPath = projectPath,
                 timeoutMs = SEARCH_TIMEOUT_MS
             ) ?: return ToolResult.Error("容器未就绪，无法执行 rg", "CONTAINER_NOT_READY")
 

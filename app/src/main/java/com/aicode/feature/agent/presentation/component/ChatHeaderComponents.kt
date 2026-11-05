@@ -68,7 +68,15 @@ internal fun ChatHeader(
     showMenuButton: Boolean = true,
     terminalActive: Boolean = false,
     gitActive: Boolean = false,
-    browserActive: Boolean = false
+    browserActive: Boolean = false,
+    /** 工作区选择入口：非空时在右上角显示工作区按钮（每个会话独立选择工作区）。 */
+    workspaceViewModel: com.aicode.feature.workspace.presentation.WorkspaceViewModel? = null,
+    hasRunningSessions: () -> Boolean = { false },
+    onSwitchWorkspaceConfirmed: () -> Unit = {},
+    /** 会话级选择回调：非空时选中工作区会改绑当前会话，而不是切换全局工作区。 */
+    onWorkspacePicked: ((com.aicode.feature.workspace.domain.model.Workspace) -> Unit)? = null,
+    /** 当前会话绑定的工作区，用于面板里打勾显示。 */
+    sessionWorkspace: com.aicode.feature.workspace.domain.model.Workspace? = null
 ) {
     Surface(
         color = MaterialTheme.colorScheme.background
@@ -127,6 +135,18 @@ internal fun ChatHeader(
                         FeatherIcons.Plus,
                         contentDescription = stringResource(R.string.chat_new_session),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                // 工作区选择：放在右上角，每个会话独立选择自己的开发目录。
+                if (workspaceViewModel != null) {
+                    com.aicode.feature.workspace.presentation.component.WorkspaceIconButton(
+                        viewModel = workspaceViewModel,
+                        hasRunningSessions = hasRunningSessions,
+                        onSwitchConfirmed = onSwitchWorkspaceConfirmed,
+                        modifier = Modifier.size(36.dp),
+                        iconSize = 20.dp,
+                        onWorkspacePicked = onWorkspacePicked,
+                        sessionWorkspace = sessionWorkspace
+                    )
                 }
                 WorkbenchIconButton(
                     icon = FeatherIcons.GitBranch,

@@ -70,7 +70,32 @@ class WorkspacePathMapper @Inject constructor(
     }
 
     /** 当前工作区在宿主上的根目录。 */
-    private fun hostRoot(): File = File(workspaceRepository.currentPath())
+    private fun hostRoot(): File = File(activePath() ?: workspaceRepository.currentPath())
+
+    /**
+     * 会话级工作区覆盖：AI 工具执行期间由 [runWithWorkspacePath] 设置，结束后清除。
+     *
+     * 用途：让「每个会话独立工作区」生效，而不必改动 [FileAccessProvider] 的全部 23 个方法签名。
+     * 未进入作用域时为 null，回退全局 [WorkspaceRepository.currentPath]（编辑器、设置页等场景）。
+     *
+     * 并发语义见 [WorkspaceScopeGate]：同一工作区可并发（会话与其子代理、同批并行工具），
+     * 不同工作区互斥——保证同一时刻路径映射不会串到别的会话。
+     */
+    private val workspaceScope = WorkspaceScopeGate()
+
+    private fun activePath(): String? = workspaceScope.currentPath()
+
+    /** 当前生效的工作区宿主路径（作用域优先，否则全局）。供诊断与工具层查询。 */
+    fun currentWorkspacePath(): String = activePath() ?: workspaceRepository.currentPath()
+
+    /**
+     * 在 [workspacePath] 作为工作区根的作用域内执行 [block]。
+     *
+     * 用于 AI 工具链：让文件读写、路径映射都落在**当前会话自己的工作区**内。
+     * [workspacePath] 为空时直接执行（不建立作用域，调用方回退全局行为）。
+     */
+    suspend fun <T> runWithWorkspacePath(workspacePath: String?, block: suspend () -> T): T =
+        workspaceScope.runWithPath(workspacePath, block)
 
     /** [CONTAINER_ROOT] 展开后的绝对路径（`$HOME/workspace`），供路径匹配使用。home 未就绪时回退 `/root`。 */
     private fun resolvedContainerRoot(): String =

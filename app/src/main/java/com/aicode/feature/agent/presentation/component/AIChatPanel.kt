@@ -748,6 +748,14 @@ fun AIChatPanel(
     }
     val currentWorkspace = workspaceViewModel?.current?.collectAsStateWithLifecycle()?.value
     val projectRoot = currentWorkspace?.path ?: ""
+    // 会话级工作区：当前会话绑定的目录优先，未绑定时用全局当前工作区（与原行为一致）。
+    val currentSession by viewModel.currentSessionState.collectAsStateWithLifecycle()
+    val sessionWorkspacePath = currentSession?.workspacePath?.takeIf { it.isNotBlank() }
+    val workspaceList = workspaceViewModel?.workspaces?.collectAsStateWithLifecycle()?.value.orEmpty()
+    // 顶栏打勾用：会话绑定项优先，否则回退全局当前项。
+    val headerWorkspace = sessionWorkspacePath
+        ?.let { path -> workspaceList.firstOrNull { it.path == path } }
+        ?: currentWorkspace
     val currentMode by viewModel.currentSessionMode.collectAsStateWithLifecycle()
     val currentGoal by viewModel.currentSessionGoal.collectAsStateWithLifecycle()
     val slashCommands by viewModel.slashCommands.collectAsStateWithLifecycle()
@@ -1584,7 +1592,19 @@ fun AIChatPanel(
                 showMenuButton = showMenuButton,
                 terminalActive = terminalActive,
                 gitActive = gitActive,
-                browserActive = browserActive
+                browserActive = browserActive,
+                // 工作区入口移到顶栏右上角（原在输入栏），每个会话独立选择。
+                workspaceViewModel = workspaceViewModel,
+                hasRunningSessions = hasRunningSessions,
+                onSwitchWorkspaceConfirmed = onSwitchWorkspaceConfirmed,
+                onWorkspacePicked = { ws ->
+                    // 会话级：只把当前会话改绑到所选目录，全局工作区与其他会话保持不变。
+                    val sid = viewModel.currentSessionId.value
+                    if (sid != null && workspaceViewModel != null) {
+                        workspaceViewModel.bindSessionWorkspace(sid, ws.path)
+                    }
+                },
+                sessionWorkspace = headerWorkspace
             )
         }
     ) { padding ->

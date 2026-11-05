@@ -112,7 +112,6 @@ import com.aicode.feature.settings.domain.model.ModelMetadata
 import com.aicode.feature.settings.domain.model.modelMetadataKey
 import com.aicode.feature.settings.domain.model.ProviderDashboardState
 import com.aicode.feature.workspace.presentation.WorkspaceViewModel
-import com.aicode.feature.workspace.presentation.component.WorkspaceIconButton
 import com.aicode.core.ui.ExpandableChevronIcon
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.AlertCircle
@@ -609,16 +608,8 @@ internal fun ChatInputBar(
                             runModelTest = onRunModelTest,
                             modifier = Modifier.onboardingTarget(OnboardingStep.OPEN_MODEL_PICKER)
                         )
+                        // 工作区选择按钮已移到聊天顶栏右上角（见 ChatHeader），此处不再重复渲染。
 
-                        if (workspaceViewModel != null) {
-                            WorkspaceIconButton(
-                                viewModel = workspaceViewModel,
-                                hasRunningSessions = hasRunningSessions,
-                                onSwitchConfirmed = onSwitchWorkspaceConfirmed,
-                                modifier = Modifier.size(36.dp),
-                                iconSize = 20.dp
-                            )
-                        }
 
                         // 思考能力与实际请求同源：已知就只列真实档位，未知（中转站改名 / 自定义模型）
                         // 才退回全部档位并由弹层标注「可能不生效」。

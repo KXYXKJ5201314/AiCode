@@ -436,6 +436,7 @@ object AgentModule {
         agentNotificationCenter: AgentNotificationCenter,
         eventInjector: AgentEventInjector,
         fileAccess: FileAccessProvider,
+        pathMapper: com.aicode.feature.workspace.domain.WorkspacePathMapper,
         @ApplicationContext context: Context
     ): AgentWorkflow {
         return StatefulAgentWorkflow(
@@ -463,6 +464,7 @@ object AgentModule {
             agentNotificationCenter,
             eventInjector,
             fileAccess,
+            pathMapper,
             context
         )
     }

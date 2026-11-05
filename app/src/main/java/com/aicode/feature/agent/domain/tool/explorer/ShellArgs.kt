@@ -109,7 +109,6 @@ fun headLinesOf(seg: List<String>): Int? = when {
     }
     else -> null
 }
-
 /**
  * 组装传给容器的 rg 搜索命令：基础参数 + 全部参数 token（单引号转义、`~/` 展开为 [home]），
  * 若带管道则原样追加白名单校验过的 `| head ...` 段。管道段含非 head 命令/非法参数时返回 null。
@@ -134,6 +133,113 @@ fun buildSearchCommand(tokens: List<String>, home: String = "/root"): String? {
         command += " | " + seg.joinToString(" ")
     }
     return command
+}
+
+/** rg 中「本参数是搜索模式、不是路径」的短选项（其后的 token 仍是路径，故无需吞参数）。 */
+private val RG_FLAG_TAKES_VALUE_NONE = setOf("-i", "-s", "-S", "-F", "-w", "-x", "-U", "-u", "-uu", "-uuu")
+
+/** rg 中「下一个 token 是选项值」的短/长选项：这些值不是路径，跳过校验。 */
+private val RG_FLAG_WITH_VALUE = setOf(
+    "-e", "-f", "-g", "-t", "-T", "-m", "-A", "-B", "-C", "-j", "--max-count",
+    "--glob", "--type", "--type-not", "--context", "--after-context", "--before-context",
+    "--max-depth", "--max-filesize", "--threads", "--regexp", "--file", "--replace",
+    "--encoding", "--sort", "--sortr", "--colors", "--label", "--engine"
+)
+
+/**
+ * 校验 rg 参数里的路径 token 是否都落在工作区内，用于把 search 限制在当前工作区（禁止跨工作区搜索）。
+ *
+ * 判定规则（宽松但能挡住越界）：
+ * - 选项与其取值不算路径；
+ * - `-e`/`--regexp` 之后、直到 `--` 之前的内容算正则，不算路径；
+ * - `--` 之后一律按路径处理；
+ * - 其余非选项 token 视为路径。
+ *
+ * 路径合法性：只允许相对路径，或 [workspaceRoots] 内的绝对路径（含 `~/`、`$HOME/` 展开形式）。
+ * 出现 `..` 逃逸、`/`、`/etc` 等越界路径即判为非法。
+ *
+ * @param workspaceRoots 允许的容器根路径集合（如 `~/workspace`、展开后的 `/root/workspace`）。
+ * @return 第一个越界路径；全部合法返回 null。
+ */
+fun findOutOfWorkspacePath(
+    tokens: List<String>,
+    workspaceRoots: Collection<String>,
+    home: String = "/root"
+): String? {
+    val normalizedRoots = workspaceRoots
+        .asSequence()
+        .map { expandTilde(it, home).trimEnd('/') }
+        .filter { it.isNotEmpty() }
+        .toList()
+    if (normalizedRoots.isEmpty()) return null
+
+    val (rgTokens, _) = splitPipes(tokens) ?: return null
+    var patternMode = false
+    var afterDoubleDash = false
+    var skipNext = false
+    for (token in rgTokens) {
+        if (skipNext) {
+            skipNext = false
+            continue
+        }
+        if (token == "--") {
+            afterDoubleDash = true
+            continue
+        }
+        if (!afterDoubleDash && token.startsWith("-") && token != "-") {
+            if (token == "-e" || token == "--regexp") {
+                patternMode = true
+                continue
+            }
+            if (token in RG_FLAG_WITH_VALUE || RG_FLAG_WITH_VALUE.any { token.startsWith("$it=") }) {
+                if (!token.contains('=')) skipNext = true
+                continue
+            }
+            if (token in RG_FLAG_TAKES_VALUE_NONE) {
+                // 纯开关，但 rg 的 -e 模式在开启后仍会吃下一个位置参数作为 pattern；此处保守起见不改变 patternMode。
+                continue
+            }
+            continue
+        }
+        // 位置参数：第一个（未进入 patternMode 时）是搜索模式，其余是路径
+        if (!patternMode && !afterDoubleDash) {
+            patternMode = true
+            continue
+        }
+        if (!isPathInsideWorkspace(token, normalizedRoots, home)) return token
+    }
+    return null
+}
+
+/** [path] 是否落在 [roots] 任一目录内；相对路径视为工作区内。 */
+private fun isPathInsideWorkspace(path: String, roots: List<String>, home: String): Boolean {
+    val expanded = expandTilde(path, home).replace('\\', '/')
+    // 相对路径：不含根、且不借 `..` 跳出
+    if (!expanded.startsWith("/")) {
+        val depth = expanded.split('/').fold(0) { acc, part ->
+            when (part) {
+                "", "." -> acc
+                ".." -> acc - 1
+                else -> acc + 1
+            }
+        }
+        return depth >= 0
+    }
+    val normalized = normalizeLogicalPath(expanded)
+    return roots.any { root -> normalized == root || normalized.startsWith("$root/") }
+}
+
+/** 逻辑上消除 `.`/`..` 段，保留前导 `/`（不触碰文件系统，纯字符串）。 */
+private fun normalizeLogicalPath(path: String): String {
+    val parts = ArrayDeque<String>()
+    for (part in path.split('/')) {
+        when (part) {
+            "", "." -> Unit
+            ".." -> if (parts.isNotEmpty()) parts.removeLast()
+            else -> parts.addLast(part)
+        }
+    }
+    return "/" + parts.joinToString("/")
 }
 
 /** 把 `~`/`~/` 开头的路径参数展开为 [home] 路径，避免被单引号包裹后 shell 不展开 `~`。 */
