@@ -10,6 +10,7 @@ import com.aicode.feature.settings.data.repository.ToolSafetySettingsRepository
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -211,8 +212,9 @@ class ToolPermissionPolicyEngine @Inject constructor(
      * 是否命中用户显式配置的 DENY 规则（整工具 DENY，或命令级 DENY 命中任一段）。
      *
      * 供「工作区内自动放行」做前置否决：用户拉黑的命令即便在工作区内，也必须继续拒绝。
+     * 需读取规则仓库（suspend），故与 [evaluate] 同为挂起函数。
      */
-    private fun matchesExplicitDeny(toolName: String, args: Map<String, JsonElement>): Boolean {
+    private suspend fun matchesExplicitDeny(toolName: String, args: Map<String, JsonElement>): Boolean {
         val deny = rulesRepo.loadEffectiveForCurrentProject()
             .filter { it.toolName == toolName && it.decision == PermissionDecision.DENY }
         if (deny.isEmpty()) return false
