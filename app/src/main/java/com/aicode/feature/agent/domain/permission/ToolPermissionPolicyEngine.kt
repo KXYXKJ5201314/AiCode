@@ -2,12 +2,14 @@ package com.aicode.feature.agent.domain.permission
 
 import android.content.Context
 import com.aicode.R
+import com.aicode.core.util.FileLogger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import com.aicode.feature.agent.domain.tool.AgentTool
 import com.aicode.feature.agent.domain.tool.ToolCapability
 import com.aicode.feature.settings.data.repository.ToolSafetySettingsRepository
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,6 +36,8 @@ class ToolPermissionPolicyEngine @Inject constructor(
     @param:ApplicationContext private val appContext: Context
 ) {
     private companion object {
+        const val TAG = "ToolPermissionPolicy"
+
         /** 以 `command` 参数承载 shell 命令、按命令前缀做指令级匹配的工具。 */
         val SHELL_TOOLS = setOf("Bash", SHIZUKU_TOOL)
 
@@ -153,8 +157,20 @@ class ToolPermissionPolicyEngine @Inject constructor(
             }
             return EvalResult(Verdict.ALLOW, emptyList())
         }
-
         if (capabilities == setOf(ToolCapability.READ_AGENT_CONFIG)) {
+            return EvalResult(Verdict.ALLOW, emptyList())
+        }
+
+        // 工作区内自动放行：BUILD 模式下，完全落在当前会话工作区内部的常规开发操作不再逐次弹窗。
+        // 与 AUTO 的区别是只对「工作区内部」放行——读 /etc、写 ~/.bashrc、cd /tmp 依旧要问，
+        // 因此不存在「切 AUTO 后忘记切回来」的风险。开关在设置页「工具授权」中可关。
+        // 必须排在用户显式 DENY 规则之后：否则会把用户拉黑的命令也一起放行。
+        if (mode == com.aicode.feature.agent.domain.model.AgentMode.BUILD &&
+            toolName != SHIZUKU_TOOL &&
+            toolSafetySettings.isAutoApproveInWorkspace() &&
+            matchesExplicitDeny(toolName, args).not() &&
+            isConfinedToWorkspace(toolName, args, capabilities)
+        ) {
             return EvalResult(Verdict.ALLOW, emptyList())
         }
 
@@ -188,6 +204,84 @@ class ToolPermissionPolicyEngine @Inject constructor(
             evaluateShell(rules, args, forceAsk = toolName == SHIZUKU_TOOL)
         } else {
             evaluateGeneric(rules, capabilities)
+        }
+    }
+
+    /**
+     * 是否命中用户显式配置的 DENY 规则（整工具 DENY，或命令级 DENY 命中任一段）。
+     *
+     * 供「工作区内自动放行」做前置否决：用户拉黑的命令即便在工作区内，也必须继续拒绝。
+     */
+    private fun matchesExplicitDeny(toolName: String, args: Map<String, JsonElement>): Boolean {
+        val deny = rulesRepo.loadEffectiveForCurrentProject()
+            .filter { it.toolName == toolName && it.decision == PermissionDecision.DENY }
+        if (deny.isEmpty()) return false
+        if (deny.any { it.pattern == PermissionRule.WHOLE_TOOL }) return true
+
+        val command = ((args["command"] ?: args["input"]) as? JsonPrimitive)?.content
+            ?: return false
+        val segments = ShellCommandParser.analyze(command).segments
+        return deny.any { rule ->
+            segments.any { seg -> ShellCommandParser.matches(rule.pattern, seg) }
+        }
+    }
+
+    /**
+     * 该调用是否**完全限定在当前工作区内部**，可以免打扰放行。
+     *
+     * 只覆盖常规开发动作：
+     * - shell 类工具（Bash / terminal 的 start/send）：命令工作目录、`cd` 目标、路径参数、
+     *   `rm` 目标、重定向目标都必须在 `~/workspace` 内，且命令必须可静态判定；
+     * - 文件读写（readFile / writeFile / editFile / list / search 等）：路径参数在工作区内。
+     *
+     * 其余工具（Shizuku、MCP、浏览器、改 Agent 配置等）一律返回 false，继续走原授权流程。
+     * [`AICODE_DIR`]（Agent 配置目录）显式排除：改动 Agent 自身配置仍需用户确认。
+     */
+    private fun isConfinedToWorkspace(
+        toolName: String,
+        args: Map<String, JsonElement>,
+        capabilities: Set<ToolCapability>
+    ): Boolean {
+        // 改动 Agent 配置、容器环境或调用外部动态工具：无论路径如何都要问。
+        if (capabilities.any { it in NON_REMEMBERABLE_CAPABILITIES }) return false
+        if (ToolCapability.EXTERNAL_TOOL in capabilities) return false
+        // 网络写（生成图片上传等）与浏览器自动化不属于「工作区内部操作」。
+        if (ToolCapability.NETWORK_WRITE in capabilities) return false
+        if (ToolCapability.USER_INTERACTION in capabilities) return false
+
+        if (isShellTool(toolName, args)) {
+            // terminal 的 send 把输入追加进一个长期存活的 shell：其当前工作目录由先前的 cd 决定，
+            // 我们无从得知，无法确认落在工作区内。仅 start（新会话，工作目录固定为工作区根）参与放行。
+            if (toolName == TERMINAL_TOOL) {
+                val action = (args["action"] as? JsonPrimitive)?.content?.trim()?.lowercase()
+                if (action != TERMINAL_SHELL_ACTION) return false
+            }
+            val command = ((args["command"] ?: args["input"]) as? JsonPrimitive)?.content
+                ?: return false
+            // 灾难性删除（`rm -rf .`、`rm -rf *`、`rm -rf /` 等）必须继续走原有防护流程。
+            // 它们的删除目标在词法上会被解析成「工作区根」，若不加这道前置判定就会被误放行。
+            val segments = ShellCommandParser.analyze(command).segments
+            if (checkCatastrophicRm(segments) != null) {
+                FileLogger.d(TAG, "工作区内自动放行跳过（$toolName）：命中灾难性删除防护")
+                return false
+            }
+            return when (val verdict = WorkspaceScopeInspector.inspectShellCommand(command)) {
+                is WorkspaceScopeInspector.Result.Inside -> true
+                is WorkspaceScopeInspector.Result.Outside -> {
+                    FileLogger.d(TAG, "工作区内自动放行跳过（$toolName）：${verdict.reason}")
+                    false
+                }
+            }
+        }
+
+        // 文件类工具：只认 path 参数；没有 path 参数的工具（如 sendFile 批量）不在放行范围。
+        val path = args["path"]?.jsonPrimitive?.contentOrNull ?: return false
+        return when (val verdict = WorkspaceScopeInspector.inspectPath(path)) {
+            is WorkspaceScopeInspector.Result.Inside -> true
+            is WorkspaceScopeInspector.Result.Outside -> {
+                FileLogger.d(TAG, "工作区内自动放行跳过（$toolName）：${verdict.reason}")
+                false
+            }
         }
     }
 

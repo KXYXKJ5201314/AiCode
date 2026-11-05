@@ -44,6 +44,7 @@ import com.aicode.feature.agent.domain.permission.PermissionRule
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.CheckCircle
 import compose.icons.feathericons.ChevronRight
+import compose.icons.feathericons.Folder
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Shield
 import compose.icons.feathericons.XCircle
@@ -60,6 +61,8 @@ internal fun PermissionsSection(
     projectRules: List<PermissionRule>,
     globalRules: List<PermissionRule>,
     disableSafetyInterception: Boolean,
+    autoApproveInWorkspace: Boolean,
+    onToggleAutoApproveInWorkspace: (Boolean) -> Unit,
     onToggleSafetyInterception: (Boolean) -> Unit,
     onDeleteProject: (PermissionRule) -> Unit,
     onPromote: (PermissionRule) -> Unit,
@@ -80,6 +83,20 @@ internal fun PermissionsSection(
     ) {
         SettingsGroupHeader(text = stringResource(R.string.perm_safety_group))
         SettingsGroup {
+            // 工作区内自动放行：默认开启，避免为每次 npm install / 改文件点允许；
+            // 越出工作区的操作仍然逐次询问，所以不需要用户切 AUTO。
+            SettingsRow(
+                icon = FeatherIcons.Folder,
+                title = stringResource(R.string.perm_auto_approve_in_workspace),
+                subtitle = stringResource(R.string.perm_auto_approve_in_workspace_desc),
+                trailing = {
+                    AppSwitch(
+                        checked = autoApproveInWorkspace,
+                        onCheckedChange = { onToggleAutoApproveInWorkspace(it) }
+                    )
+                }
+            )
+            SettingsDivider()
             SettingsRow(
                 icon = FeatherIcons.Shield,
                 title = stringResource(R.string.perm_disable_safety_interception),

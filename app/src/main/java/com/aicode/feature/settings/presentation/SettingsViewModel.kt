@@ -702,6 +702,9 @@ class SettingsViewModel @Inject constructor(
     private val _disableSafetyInterception = MutableStateFlow(false)
     val disableSafetyInterception: StateFlow<Boolean> = _disableSafetyInterception.asStateFlow()
 
+    private val _autoApproveInWorkspace = MutableStateFlow(true)
+    val autoApproveInWorkspace: StateFlow<Boolean> = _autoApproveInWorkspace.asStateFlow()
+
     private val _activeProfileId = MutableStateFlow(ContainerProfile.BUILTIN_ID)
     val activeProfileId: StateFlow<String> = _activeProfileId.asStateFlow()
 
@@ -1144,6 +1147,12 @@ class SettingsViewModel @Inject constructor(
             launch {
                 toolSafetySettingsRepository.disableSafetyInterceptionFlow.collectLatest {
                     _disableSafetyInterception.value = it
+                }
+            }
+
+            launch {
+                toolSafetySettingsRepository.autoApproveInWorkspaceFlow.collectLatest {
+                    _autoApproveInWorkspace.value = it
                 }
             }
 
@@ -2937,6 +2946,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setDisableSafetyInterception(disabled: Boolean) {
         viewModelScope.launch { toolSafetySettingsRepository.setDisableSafetyInterception(disabled) }
+    }
+
+    fun setAutoApproveInWorkspace(enabled: Boolean) {
+        viewModelScope.launch { toolSafetySettingsRepository.setAutoApproveInWorkspace(enabled) }
     }
 }
 
