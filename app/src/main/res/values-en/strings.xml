@@ -368,6 +368,15 @@
     <string name="settings_permission_notification_title">Notification permission required</string>
     <string name="settings_permission_notification_denied_desc">Background keepalive and agent completion notifications need the notification permission, but the system prompt cannot be shown. Please enable it manually in system settings</string>
     <string name="settings_permission_storage_denied_desc">Storage permission was denied and can no longer be requested. Please enable it manually in system settings</string>
+    <!-- Storage permission auto prompt dialog -->
+    <string name="storage_permission_prompt_title">Storage permission required</string>
+    <string name="storage_permission_prompt_desc">AiCode needs access to device storage for the following features:</string>
+    <string name="storage_permission_use_workspace">Select a folder on your phone as a workspace for the AI to read and write</string>
+    <string name="storage_permission_use_container">Extract and run the Linux container image</string>
+    <string name="storage_permission_use_export">Export logs, backups and generated files</string>
+    <string name="storage_permission_grant">Grant now</string>
+    <string name="storage_permission_open_settings">Open settings</string>
+    <string name="storage_permission_later">Later</string>
     <!-- Settings category titles -->
     <string name="settings_category_ai">AI Configuration</string>
     <string name="settings_category_environment">Environment</string>

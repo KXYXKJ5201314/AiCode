@@ -257,6 +257,9 @@ class MainActivity : ComponentActivity() {
                 preset = AppThemePreset.findById(themePresetId),
                 dynamicColor = dynamicColor
             ) {
+                // 启动时自动检查存储权限：未授予且用户没选过「以后再说」时弹出说明弹窗。
+                // 放在主题内、Surface 外，保证 Dialog 用同一套配色，且不参与页面布局。
+                com.aicode.feature.settings.presentation.component.StoragePermissionPrompt()
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

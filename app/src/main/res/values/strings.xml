@@ -368,6 +368,15 @@
     <string name="settings_permission_notification_title">需要通知权限</string>
     <string name="settings_permission_notification_denied_desc">后台保活与 Agent 完成通知需要通知权限才能生效，当前无法弹出系统授权框，请在系统设置中手动开启</string>
     <string name="settings_permission_storage_denied_desc">存储权限已被拒绝且无法再次申请，请在系统设置中手动开启</string>
+    <!-- 存储权限自动提示弹窗 -->
+    <string name="storage_permission_prompt_title">需要存储权限</string>
+    <string name="storage_permission_prompt_desc">AiCode 需要访问设备存储才能正常使用以下功能：</string>
+    <string name="storage_permission_use_workspace">把手机上的项目目录选为工作区，让 AI 直接读写</string>
+    <string name="storage_permission_use_container">解压并运行 Linux 容器镜像</string>
+    <string name="storage_permission_use_export">导出日志、备份与生成的文件</string>
+    <string name="storage_permission_grant">立即授权</string>
+    <string name="storage_permission_open_settings">去设置开启</string>
+    <string name="storage_permission_later">以后再说</string>
     <!-- Settings category titles -->
     <string name="settings_category_ai">AI 配置</string>
     <string name="settings_category_environment">运行环境</string>
