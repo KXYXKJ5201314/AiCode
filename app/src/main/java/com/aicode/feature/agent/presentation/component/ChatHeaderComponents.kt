@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.aicode.R
 import com.aicode.core.theme.Radius
 import com.aicode.core.theme.Spacing
+import com.aicode.core.theme.appPageBackground
 import com.aicode.feature.agent.domain.model.AgentMode
 import com.aicode.feature.onboarding.domain.OnboardingStep
 import com.aicode.feature.onboarding.presentation.onboardingTarget
@@ -79,7 +80,7 @@ internal fun ChatHeader(
     sessionWorkspace: com.aicode.feature.workspace.domain.model.Workspace? = null
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.background
+        color = appPageBackground()
     ) {
         Column(
             modifier = Modifier

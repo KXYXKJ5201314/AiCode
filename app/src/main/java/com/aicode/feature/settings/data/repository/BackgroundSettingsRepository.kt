@@ -25,33 +25,53 @@ private val Context.backgroundDataStore by preferencesDataStore(
 /**
  * 全局自定义背景图：图片文件拷贝到应用私有目录持久化（不依赖 content URI 授权），
  * 透明度与图片路径存 DataStore。路径为 null 表示未设置背景。
+ *
+ * 渲染方式为「壁纸」：图片绘制在所有页面内容**下方**，图片之上再叠一层主题色遮罩。
+ * 因此透明度可以放到很高（图片清楚可见），文字对比度由遮罩保证，不受图片内容影响。
  */
 @Singleton
 class BackgroundSettingsRepository @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
     companion object {
-        const val DEFAULT_ALPHA = 0.15f
-        /** 顶层水印模式下透明度上限：超过会盖住文字影响可读性。 */
-        const val MAX_ALPHA = 0.2f
+        const val DEFAULT_ALPHA = 0.35f
+        /**
+         * 壁纸模式下图片不透明度上限。
+         *
+         * 图片位于内容下方，不再遮挡文字，所以可以接近全不透明；保留一点余量是为了
+         * 让图片与主题色轻微融合，避免整屏变成纯照片、UI 边界消失。
+         */
+        const val MAX_ALPHA = 0.95f
         /** 最小透明度：0 表示完全透明（背景不可见）。 */
         const val MIN_ALPHA = 0f
         private val IMAGE_PATH_KEY = stringPreferencesKey("background_image_path")
         private val ALPHA_KEY = floatPreferencesKey("background_alpha")
 
-        /** 把 UI 百分比（0~100）线性映射为实际透明度（0~MAX_ALPHA）。 */
+        /** 把 UI 百分比（0~100）线性映射为图片不透明度（0~MAX_ALPHA）。 */
         fun sliderToAlpha(percent: Float): Float =
             MAX_ALPHA * (percent / 100f).coerceIn(0f, 1f)
 
-        /** 把实际透明度反映射为 UI 百分比（0~100）。 */
+        /** 把实际不透明度反映射为 UI 百分比（0~100）。 */
         fun alphaToSlider(alpha: Float): Float =
             (alpha / MAX_ALPHA).coerceIn(0f, 1f) * 100f
+
+        /**
+         * 图片之上那层主题色遮罩的不透明度，随用户设定的图片不透明度自动反向调整。
+         *
+         * 图片越明显遮罩越薄，保证「拉到 100% 图片就清楚可见」；图片越淡遮罩越厚，
+         * 此时本来就接近纯色背景，遮罩厚一些也不影响观感，反而让配色更统一。
+         * 下限 0.35 是为了即便图片全显示也仍有基础对比度。
+         */
+        fun scrimAlphaFor(imageAlpha: Float): Float {
+            val t = (imageAlpha / MAX_ALPHA).coerceIn(0f, 1f)
+            return 0.85f - 0.50f * t
+        }
     }
 
     /** 当前背景图文件绝对路径；null 表示未设置。 */
     val imagePathFlow: Flow<String?> = context.backgroundDataStore.data.map { it[IMAGE_PATH_KEY] }
 
-    /** 背景图不透明度（0.05~0.2，顶层水印保证文字可读）。 */
+    /** 图片不透明度（0~MAX_ALPHA），图片位于内容下方，不遮挡文字。 */
     val alphaFlow: Flow<Float> = context.backgroundDataStore.data.map {
         (it[ALPHA_KEY] ?: DEFAULT_ALPHA).coerceIn(MIN_ALPHA, MAX_ALPHA)
     }

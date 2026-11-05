@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aicode.R
 import com.aicode.core.theme.Spacing
+import com.aicode.core.theme.appPageBackground
 import com.aicode.core.ui.ImageViewerHost
 import com.aicode.core.ui.LocalImageViewer
 import com.aicode.core.ui.readableContentMaxWidth
@@ -1570,7 +1571,7 @@ fun AIChatPanel(
         )
     ) {
         Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = com.aicode.core.theme.appPageBackground(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             ChatHeader(

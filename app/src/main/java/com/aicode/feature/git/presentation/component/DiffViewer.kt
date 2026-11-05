@@ -97,7 +97,7 @@ fun DiffViewerScreen(
     BackHandler { onBack() }
     val path = diffData?.filePath ?: filePath
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = com.aicode.core.theme.appPageBackground(),
         topBar = {
             TopAppBar(
                 title = {

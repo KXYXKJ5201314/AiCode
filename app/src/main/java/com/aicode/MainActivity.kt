@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
@@ -260,27 +261,22 @@ class MainActivity : ComponentActivity() {
                 // 启动时自动检查存储权限：未授予且用户没选过「以后再说」时弹出说明弹窗。
                 // 放在主题内、Surface 外，保证 Dialog 用同一套配色，且不参与页面布局。
                 com.aicode.feature.settings.presentation.component.StoragePermissionPrompt()
+                // 全局自定义背景图：作为「壁纸」绘制在页面内容下方，图片之上再叠一层主题色遮罩。
+                // 这样图片可以很清楚地显示，同时文字对比度由遮罩保证，不受图片内容影响。
+                // 页面级容器通过 LocalWallpaperActive 把底色改为透明，让壁纸透出来。
+                // 不拦截触摸事件；弹窗（Dialog 独立窗口）不受层级影响。
+                val bgPath by backgroundSettings.imagePathFlow.collectAsStateWithLifecycle(initialValue = null)
+                val bgAlpha by backgroundSettings.alphaFlow.collectAsStateWithLifecycle(initialValue = BackgroundSettingsRepository.DEFAULT_ALPHA)
+                val wallpaperActive = bgPath != null && bgAlpha > 0f
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    // 有背景图时透明，让壁纸层透出来；无背景图时就是主题背景色。
+                    color = if (wallpaperActive) Color.Transparent else MaterialTheme.colorScheme.background
                 ) {
-                    // 全局自定义背景图：叠加在所有页面内容之上（水印效果），透明度可调。
-                    // 不拦截触摸事件；弹窗（Dialog 独立窗口）不受层级影响。
-                    val bgPath by backgroundSettings.imagePathFlow.collectAsStateWithLifecycle(initialValue = null)
-                    val bgAlpha by backgroundSettings.alphaFlow.collectAsStateWithLifecycle(initialValue = BackgroundSettingsRepository.DEFAULT_ALPHA)
+                    CompositionLocalProvider(
+                        com.aicode.core.theme.LocalWallpaperActive provides wallpaperActive
+                    ) {
                     Box(modifier = Modifier.fillMaxSize()) {
-                        AgreementGate(repository = agreementRepository) { agreementAccepted ->
-                            AppNavigation(
-                                onboardingRepository = onboardingRepository,
-                                agreementAccepted = agreementAccepted
-                            )
-                            if (agreementAccepted) {
-                                // 全局凭据弹窗：覆盖所有页面，命令行 git 缺凭据在任意页面都能弹。
-                                com.aicode.feature.credentials.presentation.component.GlobalCredentialDialogHost(
-                                    bridge = credentialRequestBridge
-                                )
-                            }
-                        }
                         if (bgPath != null && bgAlpha > 0f) {
                             val screen = LocalView.current
                             val bitmap by produceState<ImageBitmap?>(initialValue = null, bgPath) {
@@ -302,9 +298,33 @@ class MainActivity : ComponentActivity() {
                                         .alpha(bgAlpha)
                                 )
                             }
+                            // 图片之上的主题色遮罩：图片越明显遮罩越薄（见 scrimAlphaFor），
+                            // 保证任何图片下正文与控件的对比度都够。
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        MaterialTheme.colorScheme.background.copy(
+                                            alpha = BackgroundSettingsRepository.scrimAlphaFor(bgAlpha)
+                                        )
+                                    )
+                            )
+                        }
+                        AgreementGate(repository = agreementRepository) { agreementAccepted ->
+                            AppNavigation(
+                                onboardingRepository = onboardingRepository,
+                                agreementAccepted = agreementAccepted
+                            )
+                            if (agreementAccepted) {
+                                // 全局凭据弹窗：覆盖所有页面，命令行 git 缺凭据在任意页面都能弹。
+                                com.aicode.feature.credentials.presentation.component.GlobalCredentialDialogHost(
+                                    bridge = credentialRequestBridge
+                                )
+                            }
                         }
                         // beta 包全局水印，置于最上层，不拦截触摸。
                         BetaWatermark()
+                    }
                     }
                 }
             }

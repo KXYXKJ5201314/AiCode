@@ -230,7 +230,7 @@ fun CodeEditorScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = com.aicode.core.theme.appPageBackground(),
         topBar = {
             Column {
                 TopAppBar(

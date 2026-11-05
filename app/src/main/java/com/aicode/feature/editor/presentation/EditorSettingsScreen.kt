@@ -47,7 +47,7 @@ fun EditorSettingsScreen(
     val settings by viewModel.settings.collectAsStateWithLifecycle()
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = com.aicode.core.theme.appPageBackground(),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.editor_settings)) },

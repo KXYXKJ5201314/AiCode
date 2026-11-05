@@ -93,10 +93,15 @@ internal fun CollapsibleGroupHeader(
     }
 }
 
-/** 设置页背景：统一使用语义定义的 pageBackground。 */
+/**
+ * 设置页背景：统一使用语义定义的 pageBackground。
+ *
+ * 有全局背景图时返回透明，让底层的壁纸透出来；无背景图时与改造前完全一致。
+ */
 @Composable
 internal fun settingsPageBackground(): Color =
-    MaterialTheme.semanticColors.pageBackground
+    if (com.aicode.core.theme.LocalWallpaperActive.current) Color.Transparent
+    else MaterialTheme.semanticColors.pageBackground
 
 /** 分组小标题：卡片上方灰色小字，左对齐。 */
 @Composable
