@@ -74,29 +74,37 @@ jobs:
           fi
           echo "✓ versionCode 单调递增: $prev_vc -> $cur_vc"
 
-      - name: Restore release keystore
+      # 签名准备：优先用 Secret 里的正式 keystore；Secret 未配置或内容无效时自动生成
+      # 临时 keystore，避免 0 字节假 jks 导致打包失败（Tag number over 30 is not supported）。
+      - name: Prepare signing
         env:
-          # keystore 文件以 base64 存入 Secret，避免二进制文件被破坏。
-          # 还原到 app/aicode.jks，与 build.gradle.kts 期望的位置一致。
           KEYSTORE_BASE64: ${{ secrets.AICODE_KEYSTORE_BASE64 }}
-        run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > app/aicode.jks
-          echo "keystore restored ($(stat -c%s app/aicode.jks) bytes)"
-
-      - name: Generate keystore.properties
-        env:
           KEYSTORE_PASSWORD: ${{ secrets.AICODE_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.AICODE_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.AICODE_KEY_PASSWORD }}
         run: |
-          cat > app/keystore.properties <<EOF
-          storeFile=aicode.jks
-          storePassword=$KEYSTORE_PASSWORD
-          keyAlias=$KEY_ALIAS
-          keyPassword=$KEY_PASSWORD
-          EOF
-          echo "app/keystore.properties generated"
-
+          set -e
+          USE_SECRET=0
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            printf '%s' "$KEYSTORE_BASE64" | base64 -d > app/aicode.jks
+            size=$(stat -c%s app/aicode.jks)
+            echo "keystore restored ($size bytes)"
+            if [ "$size" -ge 1024 ]; then USE_SECRET=1; fi
+          fi
+          if [ "$USE_SECRET" = "1" ]; then
+            STORE_PASS="$KEYSTORE_PASSWORD"; ALIAS="$KEY_ALIAS"; KEY_PASS="$KEY_PASSWORD"
+          else
+            echo "::warning::未配置有效 AICODE_KEYSTORE_* Secrets，使用临时签名（不可用于商店发布）"
+            STORE_PASS=aicode-ci; ALIAS=aicode; KEY_PASS=aicode-ci
+            keytool -genkeypair -v -keystore app/aicode.jks -storetype JKS -storepass "$STORE_PASS" -keypass "$KEY_PASS" -alias "$ALIAS" -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=AiCode CI,OU=CI,O=AiCode,L=NA,S=NA,C=CN"
+          fi
+          {
+            echo "storeFile=aicode.jks"
+            echo "storePassword=$STORE_PASS"
+            echo "keyAlias=$ALIAS"
+            echo "keyPassword=$KEY_PASS"
+          } > app/keystore.properties
+          echo "keystore.properties generated (use_secret=$USE_SECRET)"
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
