@@ -190,7 +190,7 @@ class SessionUseCase @Inject constructor(
      * @return 是否修改成功（会话不存在时返回 false）。
      */
     suspend fun updateSessionWorkspace(sessionId: String, workspacePath: String): Boolean {
-        val session = chatSessionDao.getSessionById(sessionId) ?: return false
+        val session = chatSessionDao.getById(sessionId) ?: return false
         if (session.workspacePath == workspacePath) return true
         chatSessionDao.updateWorkspacePath(
             id = sessionId,

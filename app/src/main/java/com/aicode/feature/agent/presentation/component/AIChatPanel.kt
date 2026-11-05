@@ -749,7 +749,7 @@ fun AIChatPanel(
     val currentWorkspace = workspaceViewModel?.current?.collectAsStateWithLifecycle()?.value
     val projectRoot = currentWorkspace?.path ?: ""
     // 会话级工作区：当前会话绑定的目录优先，未绑定时用全局当前工作区（与原行为一致）。
-    val currentSession by viewModel.currentSessionState.collectAsStateWithLifecycle()
+    // currentSession 已在上方声明（= currentSessionState），此处直接复用。
     val sessionWorkspacePath = currentSession?.workspacePath?.takeIf { it.isNotBlank() }
     val workspaceList = workspaceViewModel?.workspaces?.collectAsStateWithLifecycle()?.value.orEmpty()
     // 顶栏打勾用：会话绑定项优先，否则回退全局当前项。
@@ -1595,8 +1595,9 @@ fun AIChatPanel(
                 browserActive = browserActive,
                 // 工作区入口移到顶栏右上角（原在输入栏），每个会话独立选择。
                 workspaceViewModel = workspaceViewModel,
-                hasRunningSessions = hasRunningSessions,
-                onSwitchWorkspaceConfirmed = onSwitchWorkspaceConfirmed,
+                // 与下方 ChatInputBar 同一套语义：有会话在跑时先确认，确认后停止任务。
+                hasRunningSessions = { viewModel.hasRunningSessionsInCurrentWorkspace() },
+                onSwitchWorkspaceConfirmed = { viewModel.stopAllAndCloseTerminal() },
                 onWorkspacePicked = { ws ->
                     // 会话级：只把当前会话改绑到所选目录，全局工作区与其他会话保持不变。
                     val sid = viewModel.currentSessionId.value
