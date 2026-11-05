@@ -19,6 +19,40 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+/**
+ * 签名配置是否**真正可用**（而不只是 keystore.properties 文件存在）。
+ *
+ * 背景：CI 里 Secret 为空时，workflow 仍会写出 keystore.properties，并生成 0 字节的假 jks。
+ * 只看文件存在会让 Gradle 去读那个坏文件，抛
+ * `KeytoolException: Failed to read key from store: Tag number over 30 is not supported`，
+ * 整个构建在打包最后一步失败。
+ *
+ * 这里改为校验三件事，任一不满足就当作「无签名」，产出 unsigned APK：
+ * 1. 四个属性齐全且非空；
+ * 2. jks 文件真实存在；
+ * 3. jks 体积明显不是 0（0 字节是 CI 空 Secret 的典型产物）。
+ */
+val signingReady: Boolean = run {
+    if (!keystorePropertiesFile.exists()) return@run false
+    val storePath = keystoreProperties.getProperty("storeFile")?.trim().orEmpty()
+    val storePass = keystoreProperties.getProperty("storePassword")?.trim().orEmpty()
+    val alias = keystoreProperties.getProperty("keyAlias")?.trim().orEmpty()
+    val keyPass = keystoreProperties.getProperty("keyPassword")?.trim().orEmpty()
+    if (storePath.isEmpty() || storePass.isEmpty() || alias.isEmpty() || keyPass.isEmpty()) {
+        logger.lifecycle("[signing] keystore.properties 存在但字段不全，跳过签名（产出 unsigned 包）")
+        return@run false
+    }
+    val store = file(storePath)
+    if (!store.isFile || store.length() < 1024L) {
+        logger.lifecycle(
+            "[signing] 密钥库不可用（路径=${store.absolutePath}，" +
+                "存在=${store.isFile}，大小=${if (store.isFile) store.length() else 0}B），跳过签名"
+        )
+        return@run false
+    }
+    true
+}
+
 // gitVersionName 从 git tag 动态解析，彻底解决“发版时手改 build.gradle.kts 与 tag 双向不同步”问题。
 // 规则：
 //   1. 若当前 commit 刚好有 tag（如 v1.7.0 或 v1.7.0-rc1），直接提取为 "1.7.0" 或 "1.7.0-rc1"；
@@ -92,7 +126,7 @@ android {
 
     signingConfigs {
         create("release") {
-            if (keystorePropertiesFile.exists()) {
+            if (signingReady) {
                 storeFile = file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
@@ -178,7 +212,8 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            if (keystorePropertiesFile.exists()) {
+            // 仅当密钥库真实可用才挂签名；否则产出 unsigned APK（CI 缺 Secret 时不再中途失败）。
+            if (signingReady) {
                 signingConfig = signingConfigs.getByName("release")
             }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
