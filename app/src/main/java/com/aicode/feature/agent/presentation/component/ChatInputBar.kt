@@ -267,6 +267,11 @@ internal fun ChatInputBar(
         color = Color.Transparent,
         modifier = modifier.fillMaxWidth()
     ) {
+        // 壁纸激活时把输入区的实底色降为半透明，让背景图透出来；
+        // 未设背景图时保持原来的近实色，视觉与改造前一致。
+        val wallpaperOn = com.aicode.core.theme.LocalWallpaperActive.current
+        // 输入区/输入框的底色不透明度：有壁纸时降到 0.42，图片能透上来但仍托住文字。
+        val inputSurfaceAlpha = if (wallpaperOn) 0.42f else 0.98f
         val imeInset = rememberImeBottomInset()
         // 滚动弱化：内容区（slash 菜单/排队面板/数据面板/输入框本体）整体淡出到 40%，蒙版渐变保持不透明。
         val contentAlpha by animateFloatAsState(
@@ -294,7 +299,7 @@ internal fun ChatInputBar(
                         Brush.verticalGradient(
                             listOf(
                                 MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
+                                MaterialTheme.colorScheme.surface.copy(alpha = inputSurfaceAlpha)
                             ),
                             startY = 0f,
                             endY = maskGradientEndY
@@ -478,7 +483,7 @@ internal fun ChatInputBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(Radius.lg))
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.98f))
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = inputSurfaceAlpha))
                     .border(
                         1.dp,
                         MaterialTheme.colorScheme.outlineVariant,
