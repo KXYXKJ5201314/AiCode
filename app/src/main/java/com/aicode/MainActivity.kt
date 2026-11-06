@@ -653,6 +653,15 @@ fun AppNavigation(
                 openWorkbench(WorkbenchPaneKind.BROWSER)
                 if (!permanentDrawer) scope.launch { drawerState.close() }
             },
+            // 终端 / Git 从顶栏迁到侧边栏：这里复用同一套 openWorkbench 逻辑。
+            onNavigateToTerminal = {
+                openWorkbench(WorkbenchPaneKind.TERMINAL)
+                if (!permanentDrawer) scope.launch { drawerState.close() }
+            },
+            onNavigateToGit = {
+                openWorkbench(WorkbenchPaneKind.GIT)
+                if (!permanentDrawer) scope.launch { drawerState.close() }
+            },
             onNavigateToSettings = {
                 navController.navigate("settings")
                 if (!permanentDrawer) scope.launch { drawerState.snapTo(DrawerValue.Closed) }

@@ -121,10 +121,12 @@ import compose.icons.feathericons.FilePlus
 import compose.icons.feathericons.Folder
 import compose.icons.feathericons.FolderPlus
 import compose.icons.feathericons.Globe
+import compose.icons.feathericons.GitBranch
 import compose.icons.feathericons.HardDrive
 import compose.icons.feathericons.RefreshCw
 import compose.icons.feathericons.Server
 import compose.icons.feathericons.Settings
+import compose.icons.feathericons.Terminal
 import compose.icons.feathericons.Trash2
 import compose.icons.feathericons.X
 import androidx.compose.ui.res.stringResource
@@ -175,6 +177,10 @@ fun ChatDrawerContent(
     onCancelPasteOverwrite: () -> Unit,
     onClearClipboard: () -> Unit,
     onNavigateToBrowser: (() -> Unit)? = null,
+    /** Git 入口：非空时在侧边栏显示。原来在顶栏，收到这里让顶栏只留工作区与新建。 */
+    onNavigateToGit: (() -> Unit)? = null,
+    /** 终端入口：非空时在侧边栏显示。 */
+    onNavigateToTerminal: (() -> Unit)? = null,
     onNavigateToSettings: () -> Unit,
     searchQuery: String,
     searchState: ChatSearchState,
@@ -238,7 +244,7 @@ fun ChatDrawerContent(
         // 聊天记录搜索框放在 Tab 栏正下方，仅「会话」Tab 可见。
         if (selectedTab == 0 && isSelectionMode) {
             Surface(
-                color = MaterialTheme.semanticColors.cardSurface,
+                color = com.aicode.core.theme.appSidebarCardSurface(),
                 shape = RoundedCornerShape(Radius.mdLarge),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -374,6 +380,23 @@ fun ChatDrawerContent(
                     icon = FeatherIcons.Globe,
                     title = stringResource(R.string.browser_title),
                     onClick = onNavigateToBrowser
+                )
+                SettingsDivider()
+            }
+            // 终端 / Git 从顶栏迁来：顶栏只保留工作区与新建会话，其余入口集中在这里。
+            if (onNavigateToTerminal != null) {
+                SettingsRow(
+                    icon = FeatherIcons.Terminal,
+                    title = stringResource(R.string.drawer_entry_terminal),
+                    onClick = onNavigateToTerminal
+                )
+                SettingsDivider()
+            }
+            if (onNavigateToGit != null) {
+                SettingsRow(
+                    icon = FeatherIcons.GitBranch,
+                    title = stringResource(R.string.drawer_entry_git),
+                    onClick = onNavigateToGit
                 )
                 SettingsDivider()
             }

@@ -32,13 +32,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aicode.R
-import com.aicode.core.theme.Radius
 import com.aicode.core.theme.Spacing
 import com.aicode.core.theme.appPageBackground
 import com.aicode.feature.agent.domain.model.AgentMode
@@ -46,11 +44,8 @@ import com.aicode.feature.onboarding.domain.OnboardingStep
 import com.aicode.feature.onboarding.presentation.onboardingTarget
 import com.aicode.feature.settings.presentation.component.ModelLogoIcon
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.GitBranch
-import compose.icons.feathericons.Globe
 import compose.icons.feathericons.Menu
 import compose.icons.feathericons.Plus
-import compose.icons.feathericons.Terminal
 
 @Composable
 internal fun ChatHeader(
@@ -138,6 +133,7 @@ internal fun ChatHeader(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 // 工作区选择：放在右上角，每个会话独立选择自己的开发目录。
+                // 其余入口（Git / 终端 / 浏览器 / 设置）统一收进侧边栏，顶栏保持干净。
                 if (workspaceViewModel != null) {
                     com.aicode.feature.workspace.presentation.component.WorkspaceIconButton(
                         viewModel = workspaceViewModel,
@@ -149,18 +145,6 @@ internal fun ChatHeader(
                         sessionWorkspace = sessionWorkspace
                     )
                 }
-                WorkbenchIconButton(
-                    icon = FeatherIcons.GitBranch,
-                    contentDescription = stringResource(R.string.chat_open_git),
-                    active = gitActive,
-                    onClick = onNavigateToGit
-                )
-                WorkbenchIconButton(
-                    icon = FeatherIcons.Terminal,
-                    contentDescription = stringResource(R.string.chat_open_terminal),
-                    active = terminalActive,
-                    onClick = onNavigateToTerminal
-                )
             }
             // 远程模式：左边 SSH 连接状态，右边 token 累计统计
             if (connectionState != null) {
@@ -178,42 +162,6 @@ internal fun ChatHeader(
                     )
                 }
             }
-        }
-    }
-}
-
-/** 顶栏工作台入口按钮：大屏右栏开着对应内容时高亮，否则看不出点一下是开还是关。 */
-@Composable
-private fun WorkbenchIconButton(
-    icon: ImageVector,
-    contentDescription: String,
-    active: Boolean,
-    onClick: () -> Unit
-) {
-    IconButton(onClick = onClick) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .then(
-                    if (active) {
-                        Modifier
-                            .clip(RoundedCornerShape(Radius.sm))
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
-                    } else {
-                        Modifier
-                    }
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon,
-                contentDescription = contentDescription,
-                tint = if (active) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
         }
     }
 }

@@ -124,7 +124,8 @@ internal fun SettingsGroup(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.semanticColors.cardSurface,
+        // 有背景图时半透明，让侧边栏/设置页的壁纸透出来；无背景图时与原来一致。
+        color = com.aicode.core.theme.appSidebarCardSurface(),
         shadowElevation = 0.dp
     ) {
         Column(content = content)
@@ -154,7 +155,7 @@ internal fun LazyGroupItem(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(MaterialTheme.semanticColors.cardSurface)
+            .background(com.aicode.core.theme.appSidebarCardSurface())
     ) {
         content()
         if (index != lastIndex) SettingsDivider()

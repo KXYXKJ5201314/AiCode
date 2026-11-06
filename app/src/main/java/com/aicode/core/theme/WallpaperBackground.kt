@@ -27,3 +27,14 @@ val LocalWallpaperActive = staticCompositionLocalOf { false }
 fun appPageBackground(): Color =
     if (LocalWallpaperActive.current) Color.Transparent
     else MaterialTheme.colorScheme.background
+
+/**
+ * 侧边栏卡片（会话行、入口分组）的底色。
+ *
+ * 有背景图时把 `cardSurface` 降到半透明，让壁纸透出来；无背景图时保持原样。
+ * 半透明而非全透明，是为了让「这是可点的卡片」这件事仍然看得出来。
+ */
+@Composable
+fun appSidebarCardSurface(): Color =
+    if (LocalWallpaperActive.current) MaterialTheme.semanticColors.cardSurface.copy(alpha = 0.55f)
+    else MaterialTheme.semanticColors.cardSurface
