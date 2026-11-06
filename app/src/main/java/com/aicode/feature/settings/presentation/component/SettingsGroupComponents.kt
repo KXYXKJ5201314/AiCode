@@ -248,7 +248,8 @@ internal fun ModelSearchField(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(50),
-        color = MaterialTheme.semanticColors.capsuleSurface
+        // 有背景图时胶囊底半透明，让侧边栏壁纸从搜索框里透出来。
+        color = com.aicode.core.theme.appCapsuleSurface(MaterialTheme.semanticColors.capsuleSurface)
     ) {
         Row(
             // 行高固定：尾部控件（清除按钮的 IconButton 自带 48dp 最小触摸目标）比正文行高更高，

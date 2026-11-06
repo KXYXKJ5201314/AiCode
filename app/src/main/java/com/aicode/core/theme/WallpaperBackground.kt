@@ -38,3 +38,13 @@ fun appPageBackground(): Color =
 fun appSidebarCardSurface(): Color =
     if (LocalWallpaperActive.current) MaterialTheme.semanticColors.cardSurface.copy(alpha = 0.55f)
     else MaterialTheme.semanticColors.cardSurface
+
+/**
+ * 侧边栏 / 设置页里的胶囊控件底色（搜索框、分段 Tab 轨道、Tab 滑块）。
+ *
+ * 这些控件原本用 `capsuleSurface` / `mutedSurface` 这类接近实色底，会整块盖住壁纸。
+ * 有背景图时降到 0.5，壁纸能透出来，同时仍看得出这是个独立的胶囊控件。
+ */
+@Composable
+fun appCapsuleSurface(base: Color): Color =
+    if (LocalWallpaperActive.current) base.copy(alpha = 0.5f) else base

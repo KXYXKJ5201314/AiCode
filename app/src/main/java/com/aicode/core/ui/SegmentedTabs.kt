@@ -50,8 +50,11 @@ fun SegmentedTabs(
     enabled: Boolean = true
 ) {
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val trackColor = MaterialTheme.semanticColors.mutedSurface
-    val thumbColor = if (dark) MaterialTheme.semanticColors.capsuleSurface else MaterialTheme.semanticColors.cardSurface
+    // 有背景图时轨道与滑块都半透明，否则 TAB 条会是一整块实色盖住侧边栏壁纸。
+    val trackColor = com.aicode.core.theme.appCapsuleSurface(MaterialTheme.semanticColors.mutedSurface)
+    val thumbColor = com.aicode.core.theme.appCapsuleSurface(
+        if (dark) MaterialTheme.semanticColors.capsuleSurface else MaterialTheme.semanticColors.cardSurface
+    )
 
     BoxWithConstraints(
         modifier = modifier
