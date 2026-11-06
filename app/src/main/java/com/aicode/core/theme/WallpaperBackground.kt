@@ -73,3 +73,17 @@ fun appCapsuleSurface(base: Color): Color {
     return base.copy(alpha = cardSurfaceAlphaFor(wallpaperStrength()))
 }
 
+/**
+ * 强调色底色（置顶会话行、选中项高亮）。
+ *
+ * 与卡片同样跟随滑块联动：图越明显高亮越透，但仍保留一部分颜色，让「这一条被置顶/
+ * 选中」这件事看得出来。未设置背景图时原样返回。
+ */
+@Composable
+fun appAccentSurface(base: Color): Color {
+    if (!LocalWallpaperActive.current) return base
+    val strength = wallpaperStrength()
+    // 强调色需要比普通卡片更醒目，因此透明度下限给到 0.65。
+    return base.copy(alpha = 0.95f + (0.65f - 0.95f) * strength)
+}
+

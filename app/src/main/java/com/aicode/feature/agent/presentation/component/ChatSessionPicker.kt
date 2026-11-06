@@ -63,7 +63,7 @@ fun ChatSessionRow(
             .fillMaxWidth()
             .heightIn(min = 40.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(if (pinned) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
+            .background(if (pinned) com.aicode.core.theme.appAccentSurface(MaterialTheme.colorScheme.primaryContainer) else Color.Transparent)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
