@@ -514,6 +514,7 @@
     <string name="chat_open_terminal">打开终端</string>
     <string name="drawer_entry_terminal">终端</string>
     <string name="drawer_entry_git">Git</string>
+    <string name="drawer_entry_workbench">工具</string>
     <string name="chat_open_browser">打开浏览器</string>
     <string name="chat_ssh_connected">SSH：已连接</string>
     <string name="chat_ssh_connecting">SSH：连接中…</string>

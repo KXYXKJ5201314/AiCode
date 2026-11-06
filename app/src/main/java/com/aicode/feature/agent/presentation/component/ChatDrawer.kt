@@ -127,6 +127,7 @@ import compose.icons.feathericons.RefreshCw
 import compose.icons.feathericons.Server
 import compose.icons.feathericons.Settings
 import compose.icons.feathericons.Terminal
+import compose.icons.feathericons.Tool
 import compose.icons.feathericons.Trash2
 import compose.icons.feathericons.X
 import androidx.compose.ui.res.stringResource
@@ -375,29 +376,69 @@ fun ChatDrawerContent(
         }
 
         SettingsGroup {
-            if (onNavigateToBrowser != null) {
-                SettingsRow(
-                    icon = FeatherIcons.Globe,
-                    title = stringResource(R.string.browser_title),
-                    onClick = onNavigateToBrowser
-                )
-                SettingsDivider()
-            }
-            // 终端 / Git 从顶栏迁来：顶栏只保留工作区与新建会话，其余入口集中在这里。
-            if (onNavigateToTerminal != null) {
-                SettingsRow(
-                    icon = FeatherIcons.Terminal,
-                    title = stringResource(R.string.drawer_entry_terminal),
-                    onClick = onNavigateToTerminal
-                )
-                SettingsDivider()
-            }
-            if (onNavigateToGit != null) {
-                SettingsRow(
-                    icon = FeatherIcons.GitBranch,
-                    title = stringResource(R.string.drawer_entry_git),
-                    onClick = onNavigateToGit
-                )
+            // 浏览器 / 终端 / Git 三个工作台入口收进可折叠分组：默认收起，只留一行标题，
+            // 需要时才展开，避免侧边栏底部长期占掉四行。
+            var toolsExpanded by rememberSaveable { mutableStateOf(false) }
+            val hasWorkbenchEntries =
+                onNavigateToBrowser != null || onNavigateToTerminal != null || onNavigateToGit != null
+            if (hasWorkbenchEntries) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { toolsExpanded = !toolsExpanded }
+                        .padding(horizontal = Spacing.lg, vertical = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = FeatherIcons.Tool,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(Spacing.md))
+                    Text(
+                        text = stringResource(R.string.drawer_entry_workbench),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f)
+                    )
+                    ExpandableChevronIcon(
+                        expanded = toolsExpanded,
+                        style = ChevronRotationStyle.RIGHT_DOWN
+                    )
+                }
+                AnimatedVisibility(
+                    visible = toolsExpanded,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Column {
+                        if (onNavigateToBrowser != null) {
+                            SettingsDivider()
+                            SettingsRow(
+                                icon = FeatherIcons.Globe,
+                                title = stringResource(R.string.browser_title),
+                                onClick = onNavigateToBrowser
+                            )
+                        }
+                        if (onNavigateToTerminal != null) {
+                            SettingsDivider()
+                            SettingsRow(
+                                icon = FeatherIcons.Terminal,
+                                title = stringResource(R.string.drawer_entry_terminal),
+                                onClick = onNavigateToTerminal
+                            )
+                        }
+                        if (onNavigateToGit != null) {
+                            SettingsDivider()
+                            SettingsRow(
+                                icon = FeatherIcons.GitBranch,
+                                title = stringResource(R.string.drawer_entry_git),
+                                onClick = onNavigateToGit
+                            )
+                        }
+                    }
+                }
                 SettingsDivider()
             }
             SettingsRow(

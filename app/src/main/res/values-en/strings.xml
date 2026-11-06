@@ -514,6 +514,7 @@
     <string name="chat_open_terminal">Open terminal</string>
     <string name="drawer_entry_terminal">Terminal</string>
     <string name="drawer_entry_git">Git</string>
+    <string name="drawer_entry_workbench">Tools</string>
     <string name="chat_open_browser">Open browser</string>
     <string name="chat_ssh_connected">SSH: Connected</string>
     <string name="chat_ssh_connecting">SSH: Connecting…</string>
