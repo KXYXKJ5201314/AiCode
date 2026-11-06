@@ -58,13 +58,13 @@ class BackgroundSettingsRepository @Inject constructor(
         /**
          * 图片之上那层主题色遮罩的不透明度，随用户设定的图片不透明度自动反向调整。
          *
-         * 图片越明显遮罩越薄，保证「拉到 100% 图片就清楚可见」；图片越淡遮罩越厚，
-         * 此时本来就接近纯色背景，遮罩厚一些也不影响观感，反而让配色更统一。
-         * 滑块拉满时遮罩只剩 0.23，只留最基本的对比度托底，不再把图片压灰。
+         * 图片越明显遮罩越薄，滑块拉满（100%）时遮罩归零，图片以**原色**呈现；
+         * 图片越淡遮罩越厚，此时本来就接近纯色背景，不影响观感。
+         * 文字可读性由各页面的卡片/气泡底色（surface、cardSurface）保证，不依赖这层遮罩。
          */
         fun scrimAlphaFor(imageAlpha: Float): Float {
             val t = (imageAlpha / MAX_ALPHA).coerceIn(0f, 1f)
-            return 0.85f - 0.62f * t
+            return 0.80f * (1f - t)
         }
     }
 
