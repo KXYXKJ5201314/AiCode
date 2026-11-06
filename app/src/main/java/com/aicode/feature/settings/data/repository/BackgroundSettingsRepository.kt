@@ -58,14 +58,25 @@ class BackgroundSettingsRepository @Inject constructor(
         /**
          * 图片之上那层主题色遮罩的不透明度，随用户设定的图片不透明度自动反向调整。
          *
-         * 图片越明显遮罩越薄，滑块拉满（100%）时遮罩归零，图片以**原色**呈现；
-         * 图片越淡遮罩越厚，此时本来就接近纯色背景，不影响观感。
-         * 文字可读性由各页面的卡片/气泡底色（surface、cardSurface）保证，不依赖这层遮罩。
+         * 曲线：`0.80 → MIN_SCRIM_ALPHA`，图片越清楚遮罩越薄。
+         *
+         * **为什么不再归零**：遮罩用的是主题 background 色（浅色主题=白、深色主题=黑），
+         * 它是正文的对比度来源。之前让滑块拉满时遮罩归零，等于让主题深色文字直接压在
+         * 图片原色上 —— 图片只要偏暗，文字立刻看不清，而改字色又会破坏没背景图时的
+         * 一致性。因此这里保留 [MIN_SCRIM_ALPHA] 作为保底：拉满时图片依然最清楚，
+         * 但始终垫着薄薄一层主题色，保证正文可读。
          */
         fun scrimAlphaFor(imageAlpha: Float): Float {
             val t = (imageAlpha / MAX_ALPHA).coerceIn(0f, 1f)
-            return 0.80f * (1f - t)
+            val raw = 0.80f * (1f - t)
+            return maxOf(raw, MIN_SCRIM_ALPHA)
         }
+
+        /**
+         * 遮罩保底不透明度。取 0.28：既让图片保持明显可见（图片本身 alpha 仍可达 1.0），
+         * 又足以把正文的对比度拉回可读区间。
+         */
+        const val MIN_SCRIM_ALPHA = 0.28f
     }
 
     /** 当前背景图文件绝对路径；null 表示未设置。 */

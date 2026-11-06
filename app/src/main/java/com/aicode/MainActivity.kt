@@ -274,7 +274,9 @@ class MainActivity : ComponentActivity() {
                     color = if (wallpaperActive) Color.Transparent else MaterialTheme.colorScheme.background
                 ) {
                     CompositionLocalProvider(
-                        com.aicode.core.theme.LocalWallpaperActive provides wallpaperActive
+                        com.aicode.core.theme.LocalWallpaperActive provides wallpaperActive,
+                        com.aicode.core.theme.LocalWallpaperAlpha provides
+                            (if (wallpaperActive) bgAlpha else 0f)
                     ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         if (bgPath != null && bgAlpha > 0f) {

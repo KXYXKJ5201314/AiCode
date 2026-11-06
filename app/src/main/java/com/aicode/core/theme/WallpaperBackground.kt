@@ -29,22 +29,47 @@ fun appPageBackground(): Color =
     else MaterialTheme.colorScheme.background
 
 /**
- * 侧边栏卡片（会话行、入口分组）的底色。
+ * 当前背景图的不透明度（0f~1f）。未设置背景图时为 0f。
  *
- * 有背景图时把 `cardSurface` 降到半透明，让壁纸透出来；无背景图时保持原样。
- * 半透明而非全透明，是为了让「这是可点的卡片」这件事仍然看得出来。
+ * [LocalWallpaperActive] 只回答「有没有壁纸」，无法表达「有多明显」。卡片、胶囊这类
+ * 控件的底色需要**跟随滑块联动**（图越清楚、控件越透），因此这里单独暴露数值。
+ */
+val LocalWallpaperAlpha = staticCompositionLocalOf { 0f }
+
+/** 背景图强度：0 = 完全淡出（等同无壁纸），1 = 滑块拉满。 */
+@Composable
+private fun wallpaperStrength(): Float = LocalWallpaperAlpha.current.coerceIn(0f, 1f)
+
+/**
+ * 卡片底色的透明度曲线：图很淡时接近原来的实色（0.93），图最清楚时降到 0.55。
+ *
+ * 保持「半透明」而不是全透明，是为了让可点区域仍然看得出边界，同时保证卡片上的
+ * 文字有一层薄底可依，不至于直接压在图上去拼运气。
+ */
+private fun cardSurfaceAlphaFor(strength: Float): Float =
+    0.93f + (0.55f - 0.93f) * strength
+
+/**
+ * 侧边栏卡片（会话行、入口分组、设置分组）的底色。
+ *
+ * 透明度**跟随背景图滑块联动**：图越明显，卡片越透（0.93 → 0.55）。
+ * 未设置背景图时原样返回，与改造前完全一致。
  */
 @Composable
-fun appSidebarCardSurface(): Color =
-    if (LocalWallpaperActive.current) MaterialTheme.semanticColors.cardSurface.copy(alpha = 0.55f)
-    else MaterialTheme.semanticColors.cardSurface
+fun appSidebarCardSurface(): Color {
+    val base = MaterialTheme.semanticColors.cardSurface
+    if (!LocalWallpaperActive.current) return base
+    return base.copy(alpha = cardSurfaceAlphaFor(wallpaperStrength()))
+}
 
 /**
  * 侧边栏 / 设置页里的胶囊控件底色（搜索框、分段 Tab 轨道、Tab 滑块）。
  *
- * 这些控件原本用 `capsuleSurface` / `mutedSurface` 这类接近实色底，会整块盖住壁纸。
- * 有背景图时降到 0.5，壁纸能透出来，同时仍看得出这是个独立的胶囊控件。
+ * 同 [appSidebarCardSurface]，透明度跟随滑块联动，未设置背景图时原样返回。
  */
 @Composable
-fun appCapsuleSurface(base: Color): Color =
-    if (LocalWallpaperActive.current) base.copy(alpha = 0.5f) else base
+fun appCapsuleSurface(base: Color): Color {
+    if (!LocalWallpaperActive.current) return base
+    return base.copy(alpha = cardSurfaceAlphaFor(wallpaperStrength()))
+}
+
