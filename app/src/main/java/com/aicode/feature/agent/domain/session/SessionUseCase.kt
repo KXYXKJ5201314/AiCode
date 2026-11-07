@@ -105,6 +105,16 @@ class SessionUseCase @Inject constructor(
         return chatSessionDao.getEmptyRootSessionByWorkspace(workspacePath)
     }
 
+    /**
+     * 工作区下所有空会话（还没有任何消息）的 id 集合。
+     *
+     * 供侧边栏过滤：空会话只是启动 / 新建时的占位壳，不该作为「聊天记录」列出来。
+     * 侧边栏会保留当前正在用的那一个（否则刚启动时列表会是空的）。
+     */
+    suspend fun getEmptySessionIdsOfWorkspace(workspacePath: String): Set<String> {
+        return chatSessionDao.getEmptyRootSessionIds(workspacePath).toSet()
+    }
+
     /** 回收工作区下多余的空会话（从未发送过消息），保留 [keepId]；保证列表最多一个空会话。 */
     suspend fun recycleEmptySessions(workspacePath: String, keepId: String? = null): Int {
         var count = 0

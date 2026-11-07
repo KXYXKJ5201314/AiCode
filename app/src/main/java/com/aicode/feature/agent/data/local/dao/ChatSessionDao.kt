@@ -27,6 +27,24 @@ interface ChatSessionDao {
     @Query("SELECT * FROM chat_sessions WHERE workspacePath = :workspacePath AND parentId IS NULL AND NOT EXISTS (SELECT 1 FROM agent_messages WHERE sessionId = chat_sessions.id) ORDER BY isPinned DESC, updatedAt DESC LIMIT 1")
     suspend fun getEmptyRootSessionByWorkspace(workspacePath: String): ChatSessionEntity?
 
+    /**
+     * 工作区下所有「还没有任何消息」的根会话 id（实时流）。
+     *
+     * 这类空会话只是启动 / 新建时占位的壳，不该出现在侧边栏聊天记录里。
+     * 用 Flow 而非一次性查询：一旦给空会话发出第一条消息，它要能立刻出现在列表中。
+     */
+    @Query("SELECT id FROM chat_sessions WHERE workspacePath = :workspacePath AND parentId IS NULL AND NOT EXISTS (SELECT 1 FROM agent_messages WHERE sessionId = chat_sessions.id)")
+    fun getEmptyRootSessionIdsFlow(workspacePath: String): Flow<List<String>>
+
+    /**
+     * 工作区下所有「还没有任何消息」的根会话 id。
+     *
+     * 这类空会话只是启动 / 新建时占位的壳，不该出现在侧边栏聊天记录里。
+     * 侧边栏列表在展示前用它的结果做过滤（当前正在用的那个除外）。
+     */
+    @Query("SELECT id FROM chat_sessions WHERE workspacePath = :workspacePath AND parentId IS NULL AND NOT EXISTS (SELECT 1 FROM agent_messages WHERE sessionId = chat_sessions.id)")
+    suspend fun getEmptyRootSessionIds(workspacePath: String): List<String>
+
     /** 最近更新的根会话（忽略置顶，仅按 updatedAt 降序），供启动时「打开最近会话」。 */
     @Query("SELECT * FROM chat_sessions WHERE workspacePath = :workspacePath AND parentId IS NULL ORDER BY updatedAt DESC LIMIT 1")
     suspend fun getLatestRootSessionByWorkspace(workspacePath: String): ChatSessionEntity?

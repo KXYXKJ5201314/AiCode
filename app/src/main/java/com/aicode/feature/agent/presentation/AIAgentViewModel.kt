@@ -381,11 +381,32 @@ class AIAgentViewModel @Inject constructor(
         _chatSearchQuery.value = ""
     }
 
+    /**
+     * 侧边栏会话列表：工作区下的根会话，**过滤掉还没有任何消息的空会话**。
+     *
+     * 空会话只是启动 / 新建时占位的壳。若不过滤，每次冷启动都会在聊天记录里多出一
+     * 条空条目；它从没被真正用过，留着只会让列表越滚越脏。
+     *
+     * 当前正在用的那一个要保留（否则刚启动、还没发消息时侧边栏会是空的，用户会以为
+     * 会话丢了），由 [_currentSessionId] 决定。
+     */
     val sessions: StateFlow<List<ChatSession>> = _currentWorkspace
         .flatMapLatest { path ->
-            if (path.isBlank()) flowOf(emptyList())
-            else chatSessionDao.getRootSessionsByWorkspace(path)
-                .map { list -> list.map { it.toDomain() } }
+            if (path.isBlank()) {
+                flowOf(emptyList())
+            } else {
+                // _currentSessionId 也要作为输入：切换会话后「保留当前空会话」的规则会变，
+                // 不订阅它就会出现「切到某个空会话后它仍不出现在列表里」的错觉。
+                combine(
+                    chatSessionDao.getRootSessionsByWorkspace(path),
+                    chatSessionDao.getEmptyRootSessionIdsFlow(path),
+                    _currentSessionId
+                ) { all, emptyIds, currentId ->
+                    val empty = emptyIds.toSet()
+                    all.map { it.toDomain() }
+                        .filter { it.id !in empty || it.id == currentId }
+                }
+            }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
@@ -1226,7 +1247,9 @@ class AIAgentViewModel @Inject constructor(
             _currentWorkspace.collectLatest { path ->
                 if (path.isBlank()) return@collectLatest
                 val recent = sessionUseCase.getMostRecentSessionOfWorkspace(path)
-                // 立即确定并设置当前会话，确保首帧 UI 秒开、侧边栏立即出现新会话，彻底消除转圈卡顿。
+                // 「最近会话」只认真正用过的会话：还没发过消息的空壳不算历史，否则
+                // 每次启动都会把上一次留下的空会话当成「最近」然后一直复用它，
+                // 看起来像「启动后没有新会话」。空会话只在 NEED_NEW 分支里被复用。
                 // 「打开最近会话」有历史就直接进最近那个（按 updatedAt，不受置顶影响）；
                 // 「新开会话」复用还没发过消息的空会话（避免每次启动都堆一个空会话），其余情况新建。
                 val targetId = when {
