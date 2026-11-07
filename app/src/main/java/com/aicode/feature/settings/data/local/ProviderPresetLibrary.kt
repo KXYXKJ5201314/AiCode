@@ -39,6 +39,18 @@ object ProviderPresetLibrary {
     const val PROVIDERS_ASSET_FILE_NAME = "providers.json"
     const val REMOTE_PROVIDERS_PATH = "data/providers.json"
 
+    /**
+     * 是否启用官方预置供应商列表。
+     *
+     * 本仓库已移除全部预置供应商（[PROVIDERS_ASSET_FILE_NAME] 为空数组），只保留「自定义
+     * 供应商」一条路径。置 false 会同时切断三处来源，否则删掉 assets 也会被下面两条
+     * 兜底覆盖回来：
+     * 1. 启动时的远程预置拉取（[refreshFromNetworkIfStale]）；
+     * 2. 磁盘缓存文件（[loadOfficial] 的第 1 步）——旧版本下载过的 providers.json
+     *    会一直留在用户设备上，不跳过它的话老用户删不干净。
+     */
+    private const val PRESET_PROVIDERS_ENABLED = false
+
     private val json = Json { ignoreUnknownKeys = true }
 
     @Volatile
@@ -52,6 +64,7 @@ object ProviderPresetLibrary {
      * 走 RepoDataFetcher 测活拉取最新配置并持久化，失败完全静默。
      */
     suspend fun refreshFromNetworkIfStale(context: Context) = withContext(Dispatchers.IO) {
+        if (!PRESET_PROVIDERS_ENABLED) return@withContext
         if (refreshAttemptedThisProcess) return@withContext
         refreshAttemptedThisProcess = true
 
@@ -83,6 +96,10 @@ object ProviderPresetLibrary {
      * 纯本地 IO，绝对不发任何网络请求，秒级返回。
      */
     fun loadOfficial(context: Context): List<ProviderPreset> {
+        // 预置供应商已移除：直接返回空列表，跳过磁盘缓存与 assets。
+        // 磁盘上可能还留着旧版本下载的 providers.json，必须一并跳过，否则删不干净。
+        if (!PRESET_PROVIDERS_ENABLED) return emptyList()
+
         cached?.let { return it }
 
         // 1. 尝试直接读取本地磁盘缓存文件（由 RepoDataFetcher 写入）
