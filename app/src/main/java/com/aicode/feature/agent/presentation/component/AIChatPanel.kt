@@ -94,6 +94,8 @@ import com.aicode.feature.agent.presentation.hasVisibleContent
 import com.aicode.feature.onboarding.domain.OnboardingStep
 import com.aicode.feature.onboarding.presentation.onboardingTarget
 import com.aicode.feature.settings.presentation.SettingsViewModel
+import com.aicode.feature.settings.domain.model.AIProviderConfig
+import com.aicode.feature.settings.domain.model.ProviderType
 import com.aicode.feature.settings.domain.model.DashboardContext
 import com.aicode.feature.settings.domain.model.ProviderDashboardState
 import com.aicode.feature.settings.domain.model.modelMetadataKey
@@ -194,6 +196,15 @@ private const val TURN_HEADER_CONTENT_TYPE = "turn-header"
 
 /** 整轮展开时，被抽为独立过程项的「轮末助手思考」的 contentType。 */
 private const val REASONING_CONTENT_TYPE = "reasoning"
+
+/**
+ * 新手引导第 9 步演示用提供商的 id 前缀。
+ *
+ * 第 7 步已改为纯演示、不写入任何真实模型，因此走到第 9 步时真实提供商列表通常为空，
+ * 模型弹层会显示「暂无模型」而导致引导卡死。这里用固定前缀构造仅用于展示的提供商分组，
+ * 回调侧可据此前缀识别演示项并跳过一切持久化与会话绑定。
+ */
+internal const val ONBOARDING_DEMO_PROVIDER_PREFIX = "__onboarding_demo__"
 
 /**
  * 回滚冲突提示里最多列出几个文件路径。Toast 空间有限，超出部分折叠成「另有 N 个」，
@@ -723,6 +734,52 @@ fun AIChatPanel(
     val targetRewindMessageId by viewModel.targetRewindMessageId.collectAsStateWithLifecycle()
     val rewindConflicts by viewModel.rewindConflicts.collectAsStateWithLifecycle()
     val providers = (settingsViewModel?.providers?.collectAsStateWithLifecycle()?.value ?: emptyList()).filter { it.isEnabled }
+    /*
+     * 新手引导第 9 步「选择模型」的演示数据。
+     * 第 7 步已改为纯演示（不写入任何真实模型），走到这一步时 providers 里通常没有任何
+     * 带模型的提供商，模型弹层只会显示「暂无模型」，用户点不过去。
+     * 这里注入一份仅用于展示的提供商分组：不落库、不写会话绑定（选中回调按 id 前缀拦截），
+     * 且只在引导该步且真实列表为空时生效，不影响任何正常使用场景。
+     */
+    val onboardingDemoProviders = remember {
+        listOf(
+            AIProviderConfig(
+                id = ONBOARDING_DEMO_PROVIDER_PREFIX + "deepseek",
+                name = "DeepSeek",
+                type = ProviderType.OPENAI,
+                apiKey = "",
+                baseUrl = "https://api.deepseek.com",
+                defaultModel = "deepseek-chat",
+                models = listOf("deepseek-chat", "deepseek-reasoner")
+            ),
+            AIProviderConfig(
+                id = ONBOARDING_DEMO_PROVIDER_PREFIX + "zhipu",
+                name = "Zhipu AI",
+                type = ProviderType.OPENAI,
+                apiKey = "",
+                baseUrl = "https://open.bigmodel.cn/api/paas/v4",
+                defaultModel = "glm-4-plus",
+                models = listOf("glm-4-plus")
+            ),
+            AIProviderConfig(
+                id = ONBOARDING_DEMO_PROVIDER_PREFIX + "qwen",
+                name = "Alibaba Qwen",
+                type = ProviderType.OPENAI,
+                apiKey = "",
+                baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                defaultModel = "qwen-max",
+                models = listOf("qwen-max")
+            )
+        )
+    }
+    // 模型弹层专用列表：仅在引导第 9 步且真实提供商都没有模型时，退回演示分组。
+    val modelSheetProviders =
+        if (onboardingStep == OnboardingStep.SIMULATE_CHOOSE_MODEL && providers.none { it.models.isNotEmpty() }) {
+            onboardingDemoProviders
+        } else {
+            providers
+        }
+
     val modelMetadata = settingsViewModel?.modelMetadata?.collectAsStateWithLifecycle()?.value.orEmpty()
     val sessionProviderModel by viewModel.currentSessionProviderModel.collectAsStateWithLifecycle()
     val defaultProviderId = settingsViewModel?.defaultModelProviderId?.collectAsStateWithLifecycle()?.value ?: ""
@@ -1832,10 +1889,14 @@ fun AIChatPanel(
                 hasRunningSessions = { viewModel.hasRunningSessionsInCurrentWorkspace() },
                 onSwitchWorkspaceConfirmed = { viewModel.stopAllAndCloseTerminal() },
                 activeProvider = activeProvider,
-                providers = providers,
+                // 引导第 9 步可能注入仅用于展示的演示分组，故这里用 modelSheetProviders 而非 providers。
+                providers = modelSheetProviders,
                 modelMetadata = modelMetadata,
                 onSelectModel = { p, m ->
-                    viewModel.setSessionProviderModel(p, m)
+                    // 引导演示项不写会话绑定（演示 provider 不存在于数据库，绑定必然失效）。
+                    if (!p.startsWith(ONBOARDING_DEMO_PROVIDER_PREFIX)) {
+                        viewModel.setSessionProviderModel(p, m)
+                    }
                 },
                 currentMode = currentMode,
                 onToggleMode = { viewModel.setSessionMode(it) },
@@ -1898,7 +1959,11 @@ fun AIChatPanel(
                 onSelectModelInOnboarding = onSelectModelInOnboarding,
                 onModelSheetDismiss = onDismissModelSheetInOnboarding,
                 // 主页模型弹层的「测试」按钮：直接复用设置页的连通性测试链路，状态由弹层自己持有。
-                onRunModelTest = settingsViewModel?.let { svm -> { p, m -> svm.runModelTest(p, m) } },
+                // 模型弹层的「测试」按钮：引导第 9 步的演示 provider 没有 Key，真实测试必然报错，
+                // 因此该步不传测试回调（弹层随即不显示测试按钮），避免新手被假报错吓到。
+                onRunModelTest = settingsViewModel
+                    ?.takeIf { onboardingStep != OnboardingStep.SIMULATE_CHOOSE_MODEL }
+                    ?.let { svm -> { p, m -> svm.runModelTest(p, m) } },
                 modifier = Modifier
                     .fillMaxWidth()
                     .onboardingTarget(OnboardingStep.SEND_MESSAGE)
