@@ -1740,9 +1740,12 @@ private fun FetchModelsDialog(
                                 val displayMsg = if (debugInfo != null && debugInfo.responseCode > 0) {
                                     stringResource(R.string.provider_fetch_http_error, debugInfo.responseCode, debugInfo.latencyMs)
                                 } else {
-                                    val codeMatch = Regex("""(?i)(HTTP\s*\d{3}|code[:\s]+[a-zA-Z0-9_]+)""").find(fetchState.message)
+                                    // 必须用 effectiveFetchState 而非 fetchState：外层 when 判的是前者，
+                                    // 只有它的 message 才能被智能转换成 FetchState.Error。
+                                    val error = effectiveFetchState as FetchState.Error
+                                    val codeMatch = Regex("""(?i)(HTTP\s*\d{3}|code[:\s]+[a-zA-Z0-9_]+)""").find(error.message)
                                     if (codeMatch != null) codeMatch.value
-                                    else fetchState.message.lines().firstOrNull()?.let { if (it.length > 28) it.take(28) + "..." else it } ?: stringResource(R.string.common_error)
+                                    else error.message.lines().firstOrNull()?.let { if (it.length > 28) it.take(28) + "..." else it } ?: stringResource(R.string.common_error)
                                 }
 
                                 Row(
