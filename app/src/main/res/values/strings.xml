@@ -1967,9 +1967,9 @@
     <string name="onboarding_provider_config_info_title">填写配置信息</string>
     <string name="onboarding_provider_config_info_desc">填写你的 API Key，并在 Base URL 一栏填入服务商提供的接口地址，例如 https://api.deepseek.com/v1。</string>
     <string name="onboarding_provider_fetch_models_title">拉取模型</string>
-    <string name="onboarding_provider_fetch_models_desc">配置好密钥后，点击「拉取模型」即可自动同步可用模型列表。</string>
+    <string name="onboarding_provider_fetch_models_desc">配置好密钥后，点击「拉取模型」即可自动同步服务商提供的可用模型列表。这里用示例数据演示。</string>
     <string name="onboarding_provider_select_fetched_model_title">添加拉取的模型</string>
-    <string name="onboarding_provider_select_fetched_model_desc">已获取到可用模型，点击添加按钮将该模型加入当前供应商。</string>
+    <string name="onboarding_provider_select_fetched_model_desc">以下是演示用的示例模型，点击添加按钮即可选好模型进入下一步（演示不会写入你的供应商配置）。</string>
     <string name="onboarding_open_model_picker_title">打开模型面板</string>
     <string name="onboarding_open_model_picker_desc">回到主页，点击输入框左侧的模型图标打开选择面板。</string>
     <string name="onboarding_choose_model_in_sheet_title">选择会话模型</string>

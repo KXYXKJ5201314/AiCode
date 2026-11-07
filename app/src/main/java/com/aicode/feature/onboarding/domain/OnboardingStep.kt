@@ -13,7 +13,8 @@ import com.aicode.R
  * 5. [PROVIDER_CONFIG_INFO]: 提供商编辑页聚焦基本信息分组（名称 / API Key / Base URL），
  *    演示自定义供应商的接入方式——重点填接口地址。
  * 6. [PROVIDER_FETCH_MODELS]: 提供商模型标签页聚焦「拉取模型」按钮。
- * 7. [SIMULATE_FETCH_DIALOG]: 蒙版上模拟拉取模型弹窗，展示获取到的模型并引导添加。
+ * 7. [SIMULATE_FETCH_DIALOG]: 蒙版上模拟拉取模型弹窗，用演示数据展示模型并引导添加。
+ *    此步不发起网络请求，也不会写入供应商配置。
  * 8. [OPEN_MODEL_PICKER]: 回到主页，聚焦模型选择按钮，提示打开面板。
  * 9. [SIMULATE_CHOOSE_MODEL]: 蒙版上模拟主页模型选择面板，演示选择模型。
  * 10. [SEND_MESSAGE]: 主页聚焦底部输入框，提示输入内容发送第一条消息开启对话。

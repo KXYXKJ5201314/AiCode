@@ -996,10 +996,7 @@ fun AppNavigation(
                         onboardingCoordinator.nextStep()
                     }
                     OnboardingStep.SIMULATE_FETCH_DIALOG -> {
-                        val current = settingsViewModel.providers.value.firstOrNull()
-                        if (current != null && current.models.isEmpty()) {
-                            settingsViewModel.saveProvider(current.copy(models = listOf("deepseek-v4-flash")))
-                        }
+                        // 纯演示步骤：绝不写入供应商配置，也不做任何持久化，只推进流程。
                         navController.popBackStack()
                         onboardingCoordinator.nextStep()
                     }
@@ -1043,10 +1040,7 @@ fun AppNavigation(
                         onboardingCoordinator.nextStep()
                     }
                     OnboardingStep.SIMULATE_FETCH_DIALOG -> {
-                        val current = settingsViewModel.providers.value.firstOrNull()
-                        if (current != null && current.models.isEmpty()) {
-                            settingsViewModel.saveProvider(current.copy(models = listOf("deepseek-v4-flash")))
-                        }
+                        // 纯演示步骤：绝不写入供应商配置，也不做任何持久化，只推进流程。
                         navController.popBackStack()
                         onboardingCoordinator.nextStep()
                     }

@@ -1968,9 +1968,9 @@
     <string name="onboarding_provider_config_info_title">Fill in the configuration</string>
     <string name="onboarding_provider_config_info_desc">Enter your API key, then put the endpoint URL provided by your vendor into the Base URL field, e.g. https://api.deepseek.com/v1.</string>
     <string name="onboarding_provider_fetch_models_title">Fetch Models</string>
-    <string name="onboarding_provider_fetch_models_desc">Once the key is configured, tap “Fetch models” to sync available models.</string>
+    <string name="onboarding_provider_fetch_models_desc">Once the key is configured, tap “Fetch models” to sync the models your vendor offers. Sample data is used here for the demo.</string>
     <string name="onboarding_provider_select_fetched_model_title">Add Fetched Model</string>
-    <string name="onboarding_provider_select_fetched_model_desc">Models retrieved. Tap the add button to add this model to the vendor.</string>
+    <string name="onboarding_provider_select_fetched_model_desc">These are sample models for the demo. Tap the add button to pick one and continue (the demo does not write to your vendor configuration).</string>
     <string name="onboarding_open_model_picker_title">Open Model Panel</string>
     <string name="onboarding_open_model_picker_desc">Back on home, tap the model icon next to the input box to open the selection panel.</string>
     <string name="onboarding_choose_model_in_sheet_title">Choose Model</string>

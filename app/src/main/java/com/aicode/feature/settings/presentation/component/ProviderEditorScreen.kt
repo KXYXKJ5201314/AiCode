@@ -1593,21 +1593,34 @@ private fun FetchModelsDialog(
     var showDebugSheet by remember { mutableStateOf(false) }
     var showAddAllConfirm by remember { mutableStateOf(false) }
 
-    val availableNewModels = remember(fetchState, existingModels, isOnboarding) {
-        when (fetchState) {
-            is FetchState.Success -> fetchState.models.filter { it !in existingModels }
-            is FetchState.Error -> if (isOnboarding) listOf("deepseek-v4-flash").filter { it !in existingModels } else emptyList()
+    // 引导演示用的假模型列表。纯 Mock 数据，点「添加」不会有任何副作用。
+    val demoModels = remember {
+        listOf("deepseek-chat", "deepseek-reasoner", "glm-4-plus", "qwen-max")
+    }
+    val effectiveFetchState: FetchState = if (isOnboarding) {
+        FetchState.Success(demoModels)
+    } else {
+        fetchState
+    }
+
+    val availableNewModels = remember(effectiveFetchState, existingModels, isOnboarding) {
+        when (effectiveFetchState) {
+            is FetchState.Success -> effectiveFetchState.models.filter { it !in existingModels }
+            is FetchState.Error -> emptyList()
             else -> emptyList()
         }
     }
 
-    val debugInfo = when (fetchState) {
-        is FetchState.Success -> fetchState.debugInfo
-        is FetchState.Error -> fetchState.debugInfo
+    val debugInfo = when (effectiveFetchState) {
+        is FetchState.Success -> effectiveFetchState.debugInfo
+        is FetchState.Error -> effectiveFetchState.debugInfo
         else -> null
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(isOnboarding) {
+        // 新手引导第 7 步为纯演示：绝不发起网络请求（新用户此环节通常还没填有效 Key，
+        // 真实请求必然失败，弹出报错会让人以为接入不了）。UI 由 [effectiveFetchState] 驱动。
+        if (isOnboarding) return@LaunchedEffect
         // Wait for bottom sheet animation to smooth out before firing network request
         delay(300)
         onFetchModels()
@@ -1668,14 +1681,15 @@ private fun FetchModelsDialog(
                 modifier = Modifier.padding(horizontal = Spacing.lg)
             )
 
-            when (fetchState) {
+            when (effectiveFetchState) {
                 is FetchState.Loading -> {
                     FetchModelsSkeleton()
                 }
                 is FetchState.Error -> {
                     if (isOnboarding) {
-                        // 引导模式下未配置有效 Key 时，呈现 DeepSeek 推荐模型演示供新手继续体验
-                        val fallbackModels = listOf("deepseek-v4-flash").filter { it !in existingModels }
+                        // 引导模式下 UI 恒为 Success（见 effectiveFetchState），此分支仅在
+                        // 未来改动破坏该保证时兜底：复用演示列表，绝不让新手看到报错。
+                        val fallbackModels = demoModels.filter { it !in existingModels }
                         val grouped = fallbackModels.groupBy { m -> modelBrandKey(m) }
                             .toSortedMap(compareBy<String> { it == "other" }.thenBy { brandDisplayName(context, it) })
                         LazyColumn(
@@ -1699,10 +1713,13 @@ private fun FetchModelsDialog(
                                                 model = m,
                                                 metadata = modelMetadata[m],
                                                 onAdd = {
-                                                    onAddModel(m)
-                                                    onDismiss()
+                                                    // 引导演示：不写入供应商配置，仅推进到下一步。
                                                     if (isOnboarding) {
+                                                        onDismiss()
                                                         onOnboardingModelAdded?.invoke()
+                                                    } else {
+                                                        onAddModel(m)
+                                                        onDismiss()
                                                     }
                                                 },
                                                 modifier = if (isFirstTarget) Modifier.onboardingTarget(OnboardingStep.SIMULATE_FETCH_DIALOG) else Modifier
@@ -1764,9 +1781,9 @@ private fun FetchModelsDialog(
                     }
                 }
                 is FetchState.Success -> {
-                    val rawModels = fetchState.models.filter { it !in existingModels && it.contains(searchQuery, ignoreCase = true) }
+                    val rawModels = effectiveFetchState.models.filter { it !in existingModels && it.contains(searchQuery, ignoreCase = true) }
                     val newModels = if (rawModels.isEmpty() && isOnboarding) {
-                        listOf("deepseek-v4-flash").filter { it !in existingModels }
+                        demoModels.filter { it !in existingModels }
                     } else rawModels
                     if (newModels.isEmpty()) {
                         SettingsGroup {
@@ -1805,10 +1822,12 @@ private fun FetchModelsDialog(
                                                 model = m,
                                                 metadata = modelMetadata[modelMetadataKey(providerId, m)],
                                                 onAdd = {
-                                                    onAddModel(m)
+                                                    // 引导演示：不写入供应商配置，仅推进到下一步。
                                                     if (isOnboarding) {
                                                         onDismiss()
                                                         onOnboardingModelAdded?.invoke()
+                                                    } else {
+                                                        onAddModel(m)
                                                     }
                                                 },
                                                 modifier = if (isFirstTarget) Modifier.onboardingTarget(OnboardingStep.SIMULATE_FETCH_DIALOG) else Modifier
@@ -1855,10 +1874,13 @@ private fun FetchModelsDialog(
                 TextButton(
                     onClick = {
                         showAddAllConfirm = false
-                        onAddModels(availableNewModels)
-                        onDismiss()
+                        // 引导演示：不写入供应商配置，仅推进到下一步。
                         if (isOnboarding) {
+                            onDismiss()
                             onOnboardingModelAdded?.invoke()
+                        } else {
+                            onAddModels(availableNewModels)
+                            onDismiss()
                         }
                     }
                 ) {
