@@ -126,6 +126,7 @@ import compose.icons.feathericons.Zap
 import com.aicode.feature.onboarding.domain.OnboardingStep
 import com.aicode.feature.onboarding.presentation.onboardingTarget
 import com.aicode.feature.settings.data.local.ProviderPreset
+import com.aicode.feature.settings.data.local.ProviderPresetLibrary
 import com.aicode.feature.terminal.data.repository.TerminalSettings
 import com.aicode.feature.terminal.presentation.component.TerminalSettingsSheet
 
@@ -318,37 +319,17 @@ fun SettingsScreen(
             OnboardingStep.PROVIDER_ADD -> {
                 section = SettingsSection.Providers
             }
-            OnboardingStep.PROVIDER_CONFIG_INFO -> {
-                if (section != SettingsSection.ProviderEditor) {
-                    val deepseek = providers.firstOrNull { it.name.contains("deepseek", ignoreCase = true) }
-                        ?: providers.firstOrNull()
-                    editingProvider = deepseek
-                    if (deepseek == null && providerPresetPrefill == null) {
-                        providerPresetPrefill = ProviderPreset(
-                            id = "deepseek",
-                            name = "DeepSeek",
-                            type = "DEEPSEEK",
-                            baseUrl = "https://api.deepseek.com",
-                            models = emptyList<String>()
-                        )
-                    }
-                    section = SettingsSection.ProviderEditor
-                }
-            }
+            OnboardingStep.PROVIDER_CONFIG_INFO,
             OnboardingStep.PROVIDER_FETCH_MODELS,
             OnboardingStep.SIMULATE_FETCH_DIALOG -> {
                 if (section != SettingsSection.ProviderEditor) {
-                    val deepseek = providers.firstOrNull { it.name.contains("deepseek", ignoreCase = true) }
-                        ?: providers.firstOrNull()
-                    editingProvider = deepseek
-                    if (deepseek == null && providerPresetPrefill == null) {
-                        providerPresetPrefill = ProviderPreset(
-                            id = "deepseek",
-                            name = "DeepSeek",
-                            type = "DEEPSEEK",
-                            baseUrl = "https://api.deepseek.com",
-                            models = emptyList<String>()
-                        )
+                    // 演示「自定义供应商」接入流程：重点引导填写 API Key 与 Base URL。
+                    // 已有供应商时复用第一条，避免引导过程反复制造空壳数据；全新用户则
+                    // 给一张空白表单（prefill 置空），让用户自己填地址——这正是要演示的动作。
+                    val existing = providers.firstOrNull()
+                    editingProvider = existing
+                    if (existing == null) {
+                        providerPresetPrefill = null
                     }
                     section = SettingsSection.ProviderEditor
                 }
@@ -696,7 +677,15 @@ fun SettingsScreen(
                             IconButton(
                                 onClick = {
                                     providerPresetPrefill = null
-                                    showAddProviderSheet = true
+                                    // 预设供应商已全部移除：面板里只剩「自定义」一项，
+                                    // 再弹一层选择页纯属多一次点击，且会带出「未找到匹配的
+                                    // 预设」的空态文案，容易被误认为加载失败。直接进编辑页。
+                                    if (ProviderPresetLibrary.loadOfficial(context).isEmpty()) {
+                                        editingProvider = null
+                                        section = SettingsSection.ProviderEditor
+                                    } else {
+                                        showAddProviderSheet = true
+                                    }
                                 },
                                 modifier = Modifier.onboardingTarget(OnboardingStep.PROVIDER_ADD)
                             ) {

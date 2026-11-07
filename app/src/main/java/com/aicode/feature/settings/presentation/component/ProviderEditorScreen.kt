@@ -518,7 +518,10 @@ fun ProviderEditorScreen(
                         ProviderTextFieldRow(
                             label = stringResource(R.string.provider_base_url),
                             value = baseUrl,
-                            onValueChange = { baseUrl = it }
+                            onValueChange = { baseUrl = it },
+                            // 无预设可套用后，Base URL 必须手填，这里给一个可直接照抄的示例，
+                            // 避免用户对着空输入框不知道该填什么格式。
+                            placeholder = stringResource(R.string.provider_base_url_placeholder)
                         )
                         SettingsDivider()
                         SettingsRow(

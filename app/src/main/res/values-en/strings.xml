@@ -306,7 +306,7 @@
     <string name="provider_add_sheet_title">Add Vendor</string>
     <string name="provider_custom">Custom Vendor</string>
     <string name="provider_preset_loading">Loading presets…</string>
-    <string name="provider_preset_empty">No matching presets</string>
+    <string name="provider_preset_empty">Use “Custom Vendor” above to fill in the endpoint details manually</string>
     <string name="provider_register_now">Register</string>
     <string name="settings_keepalive_title">Background keepalive</string>
     <string name="settings_keepalive_subtitle">Foreground notification prevents background kill</string>
@@ -1492,6 +1492,7 @@
     <string name="provider_hide_api_key">Hide API Key</string>
     <string name="provider_api_key">API Key</string>
     <string name="provider_base_url">Base URL</string>
+    <string name="provider_base_url_placeholder">e.g. https://api.deepseek.com/v1</string>
     <string name="provider_api_key_required">Please enter an API Key first</string>
     <string name="provider_fetch_missing_fields">Response is missing the list field</string>
     <string name="provider_fetch_missing_fields_detail">Response missing list field (models or data): %1$s</string>
@@ -1963,9 +1964,9 @@
     <string name="onboarding_config_provider_title">AI Vendors</string>
     <string name="onboarding_config_provider_desc">Tap to open the AI vendors list and start setting up your model vendors.</string>
     <string name="onboarding_provider_add_title">Add Vendor</string>
-    <string name="onboarding_provider_add_desc">Tap “+” to add a vendor, supporting official vendors like OpenAI, Claude, Gemini, DeepSeek, or custom relays.</string>
-    <string name="onboarding_provider_config_info_title">Configuration Info</string>
-    <string name="onboarding_provider_config_info_desc">Enter your API key. Official presets come with base URLs prefilled; custom relays can set a custom Base URL.</string>
+    <string name="onboarding_provider_add_desc">Tap “+” to add a vendor. Fill in the name, API key and endpoint URL to connect any OpenAI / Anthropic / Gemini compatible service.</string>
+    <string name="onboarding_provider_config_info_title">Fill in the configuration</string>
+    <string name="onboarding_provider_config_info_desc">Enter your API key, then put the endpoint URL provided by your vendor into the Base URL field, e.g. https://api.deepseek.com/v1.</string>
     <string name="onboarding_provider_fetch_models_title">Fetch Models</string>
     <string name="onboarding_provider_fetch_models_desc">Once the key is configured, tap “Fetch models” to sync available models.</string>
     <string name="onboarding_provider_select_fetched_model_title">Add Fetched Model</string>

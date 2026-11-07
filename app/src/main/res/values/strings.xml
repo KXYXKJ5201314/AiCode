@@ -306,7 +306,7 @@
     <string name="provider_add_sheet_title">添加供应商</string>
     <string name="provider_custom">自定义供应商</string>
     <string name="provider_preset_loading">正在加载预设库…</string>
-    <string name="provider_preset_empty">未找到匹配的预设</string>
+    <string name="provider_preset_empty">请使用上方「自定义供应商」手动填写接口信息</string>
     <string name="provider_register_now">立即注册</string>
     <string name="settings_keepalive_title">后台运行保活</string>
     <string name="settings_keepalive_subtitle">显示前台通知，防止后台被杀</string>
@@ -1492,6 +1492,7 @@
     <string name="provider_hide_api_key">隐藏密钥</string>
     <string name="provider_api_key">API Key</string>
     <string name="provider_base_url">Base URL</string>
+    <string name="provider_base_url_placeholder">例如 https://api.deepseek.com/v1</string>
     <string name="provider_api_key_required">请先填写 API Key</string>
     <string name="provider_fetch_missing_fields">响应缺少列表字段</string>
     <string name="provider_fetch_missing_fields_detail">响应缺少列表字段 (models 或 data): %1$s</string>
@@ -1962,9 +1963,9 @@
     <string name="onboarding_config_provider_title">进入 AI 供应商</string>
     <string name="onboarding_config_provider_desc">点击进入 AI 供应商管理列表，准备配置模型供应商。</string>
     <string name="onboarding_provider_add_title">添加供应商</string>
-    <string name="onboarding_provider_add_desc">点击「+」添加供应商，支持 OpenAI、Claude、Gemini、DeepSeek 等官方供应商或自定义中转。</string>
+    <string name="onboarding_provider_add_desc">点击「+」添加供应商。填入名称、API Key 与接口地址，即可接入任意 OpenAI / Anthropic / Gemini 兼容服务。</string>
     <string name="onboarding_provider_config_info_title">填写配置信息</string>
-    <string name="onboarding_provider_config_info_desc">输入你的 API 密钥。官方预设已内置根地址，第三方中转可修改 Base URL。</string>
+    <string name="onboarding_provider_config_info_desc">填写你的 API Key，并在 Base URL 一栏填入服务商提供的接口地址，例如 https://api.deepseek.com/v1。</string>
     <string name="onboarding_provider_fetch_models_title">拉取模型</string>
     <string name="onboarding_provider_fetch_models_desc">配置好密钥后，点击「拉取模型」即可自动同步可用模型列表。</string>
     <string name="onboarding_provider_select_fetched_model_title">添加拉取的模型</string>

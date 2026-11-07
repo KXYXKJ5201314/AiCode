@@ -10,7 +10,8 @@ import com.aicode.R
  * 2. [ENTER_SETTINGS]: 侧边栏展开状态，聚焦底部「设置」项，提示进入系统设置。
  * 3. [CONFIG_PROVIDER]: 设置页聚焦「AI 提供商」管理行，提示进入提供商列表。
  * 4. [PROVIDER_ADD]: 提供商列表聚焦顶栏「+」添加按钮，提示添加服务商。
- * 5. [PROVIDER_CONFIG_INFO]: 提供商编辑页聚焦 API Key / 配置信息输入区域。
+ * 5. [PROVIDER_CONFIG_INFO]: 提供商编辑页聚焦基本信息分组（名称 / API Key / Base URL），
+ *    演示自定义供应商的接入方式——重点填接口地址。
  * 6. [PROVIDER_FETCH_MODELS]: 提供商模型标签页聚焦「拉取模型」按钮。
  * 7. [SIMULATE_FETCH_DIALOG]: 蒙版上模拟拉取模型弹窗，展示获取到的模型并引导添加。
  * 8. [OPEN_MODEL_PICKER]: 回到主页，聚焦模型选择按钮，提示打开面板。
