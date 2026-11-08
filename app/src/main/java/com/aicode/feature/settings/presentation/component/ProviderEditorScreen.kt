@@ -253,6 +253,9 @@ fun ProviderEditorScreen(
     var showProxyPage by remember { mutableStateOf(false) }
     var showKeysPage by remember { mutableStateOf(false) }
     var showHeadersSheet by remember { mutableStateOf(false) }
+    // 高级设置默认收起：新手只需要填名称 / API Key / Base URL / 上游格式，
+    // 其余低频配置（请求头、完整 URL、新版端点、缓存、多 Key、代理、自定义面板）折叠隐藏。
+    var advancedExpanded by remember { mutableStateOf(false) }
     var showScriptParamsSheet by remember { mutableStateOf(false) }
     var fetchDialogKey by remember { mutableIntStateOf(0) }
 
@@ -526,28 +529,6 @@ fun ProviderEditorScreen(
                         SettingsDivider()
                         SettingsRow(
                             icon = null,
-                            title = stringResource(R.string.provider_headers_title),
-                            subtitle = if (customHeaders.isEmpty()) {
-                                stringResource(R.string.provider_headers_desc)
-                            } else {
-                                stringResource(R.string.provider_headers_count, customHeaders.count { it.first.isNotBlank() })
-                            },
-                            onClick = { showHeadersSheet = true },
-                            trailing = {
-                                Text(
-                                    text = if (customHeaders.isEmpty()) {
-                                        stringResource(R.string.provider_headers_add)
-                                    } else {
-                                        stringResource(R.string.provider_headers_manage)
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        )
-                        SettingsDivider()
-                        SettingsRow(
-                            icon = null,
                             title = stringResource(R.string.provider_section_type),
                             onClick = { showTypeSheet = true },
                             trailing = {
@@ -568,206 +549,242 @@ fun ProviderEditorScreen(
                             checked = isEnabled,
                             onCheckedChange = { isEnabled = it }
                         )
-                        SettingsDivider()
-                        ProviderSwitchRow(
-                            title = stringResource(R.string.provider_full_url),
-                            subtitle = stringResource(R.string.provider_full_url_desc),
-                            checked = useFullUrl,
-                            onCheckedChange = { useFullUrl = it }
-                        )
-                        // 新版端点开关：OpenAI 是 Responses API，Gemini 是 Interactions API，
-                        // 共用 useResponseApi 一个字段（语义一致：切到该家的新版统一端点）。
-                        if (type == ProviderType.OPENAI || type == ProviderType.GEMINI) {
-                            SettingsDivider()
-                            ProviderSwitchRow(
-                                title = stringResource(
-                                    if (type == ProviderType.GEMINI) R.string.provider_interactions_api
-                                    else R.string.provider_response_api
-                                ),
-                                checked = useResponseApi,
-                                onCheckedChange = { useResponseApi = it }
-                            )
-                        }
-                        if (type == ProviderType.OPENAI) {
-                            SettingsDivider()
-                            ProviderSwitchRow(
-                                title = stringResource(R.string.provider_cache_openai_chat_title),
-                                subtitle = stringResource(R.string.provider_cache_openai_chat_subtitle),
-                                checked = openaiChatCacheKey,
-                                onCheckedChange = { openaiChatCacheKey = it }
-                            )
-                        }
-                        if (type == ProviderType.ANTHROPIC) {
-                            SettingsDivider()
-                            ProviderSwitchRow(
-                                title = stringResource(R.string.provider_cache_anthropic_title),
-                                subtitle = stringResource(R.string.provider_cache_anthropic_subtitle),
-                                checked = anthropicCacheBreakpoints,
-                                onCheckedChange = { anthropicCacheBreakpoints = it }
-                            )
-                        }
-                        SettingsDivider()
-                        ProviderSwitchRow(
-                            title = stringResource(R.string.provider_multi_key_title),
-                            subtitle = stringResource(R.string.provider_multi_key_subtitle),
-                            checked = multiKeyEnabled,
-                            onCheckedChange = { enabled ->
-                                multiKeyEnabled = enabled
-                                // 开启时把已填的单 Key 带进列表，避免输入框隐藏后看起来「刚填的 Key 丢了」。
-                                if (enabled && apiKeys.isEmpty() && apiKey.isNotBlank()) apiKeys.add(ProviderKey(apiKey))
-                            }
-                        )
-                        if (multiKeyEnabled) {
-                            SettingsDivider()
-                            SettingsRow(
-                                icon = null,
-                                title = stringResource(R.string.provider_multi_key_manage),
-                                onClick = { showKeysPage = true },
-                                trailing = {
-                                    Text(
-                                        text = stringResource(
-                                            R.string.provider_multi_key_summary,
-                                            apiKeys.count { it.value.isNotBlank() },
-                                            keyRotationStrategyLabel(keyRotationStrategy)
-                                        ),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            )
-                        }
-                        SettingsDivider()
-                        SettingsRow(
-                            icon = null,
-                            title = stringResource(R.string.proxy_title),
-                            onClick = { showProxyPage = true },
-                            trailing = {
-                                Text(
-                                    text = if (proxyEnabled) {
-                                        "${proxyTypeLabel(proxyType)} ${proxyHost}:${proxyPort}"
-                                    } else {
-                                        stringResource(R.string.provider_proxy_off)
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        )
                     }
 
-                    // ── 自定义面板 (DIY) ──
-                    SettingsGroupHeader(text = stringResource(R.string.provider_section_dashboard))
-                    SettingsGroup {
-                        ProviderTextFieldRow(
-                            label = stringResource(R.string.provider_dashboard_script),
-                            value = dashboardScriptPath,
-                            onValueChange = { dashboardScriptPath = it },
-                            placeholder = stringResource(R.string.provider_dashboard_script_placeholder),
-                            trailing = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    if (dashboardScriptPath.isNotBlank()) {
-                                        IconButton(
-                                            onClick = { dashboardScriptPath = "" },
-                                            modifier = Modifier.size(32.dp)
-                                        ) {
+                    // ── 高级设置（默认收起）──
+                    // 面向新手精简首屏：请求头 / 完整 URL / 新版端点 / 缓存 /
+                    // 多 Key / 代理 / 自定义面板 均为低频配置，收起后不占首屏。
+                    CollapsibleGroupHeader(
+                        text = stringResource(R.string.provider_section_advanced),
+                        expanded = advancedExpanded,
+                        onToggle = { advancedExpanded = !advancedExpanded }
+                    )
+                    AnimatedVisibility(visible = advancedExpanded) {
+                        Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                            SettingsGroup {
+                                SettingsRow(
+                                    icon = null,
+                                    title = stringResource(R.string.provider_headers_title),
+                                    subtitle = if (customHeaders.isEmpty()) {
+                                        stringResource(R.string.provider_headers_desc)
+                                    } else {
+                                        stringResource(R.string.provider_headers_count, customHeaders.count { it.first.isNotBlank() })
+                                    },
+                                    onClick = { showHeadersSheet = true },
+                                    trailing = {
+                                        Text(
+                                            text = if (customHeaders.isEmpty()) {
+                                                stringResource(R.string.provider_headers_add)
+                                            } else {
+                                                stringResource(R.string.provider_headers_manage)
+                                            },
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                )
+                                SettingsDivider()
+                                ProviderSwitchRow(
+                                    title = stringResource(R.string.provider_full_url),
+                                    subtitle = stringResource(R.string.provider_full_url_desc),
+                                    checked = useFullUrl,
+                                    onCheckedChange = { useFullUrl = it }
+                                )
+                                // 新版端点开关：OpenAI 是 Responses API，Gemini 是 Interactions API，
+                                // 共用 useResponseApi 一个字段（语义一致：切到该家的新版统一端点）。
+                                if (type == ProviderType.OPENAI || type == ProviderType.GEMINI) {
+                                    SettingsDivider()
+                                    ProviderSwitchRow(
+                                        title = stringResource(
+                                            if (type == ProviderType.GEMINI) R.string.provider_interactions_api
+                                            else R.string.provider_response_api
+                                        ),
+                                        checked = useResponseApi,
+                                        onCheckedChange = { useResponseApi = it }
+                                    )
+                                }
+                                if (type == ProviderType.OPENAI) {
+                                    SettingsDivider()
+                                    ProviderSwitchRow(
+                                        title = stringResource(R.string.provider_cache_openai_chat_title),
+                                        subtitle = stringResource(R.string.provider_cache_openai_chat_subtitle),
+                                        checked = openaiChatCacheKey,
+                                        onCheckedChange = { openaiChatCacheKey = it }
+                                    )
+                                }
+                                if (type == ProviderType.ANTHROPIC) {
+                                    SettingsDivider()
+                                    ProviderSwitchRow(
+                                        title = stringResource(R.string.provider_cache_anthropic_title),
+                                        subtitle = stringResource(R.string.provider_cache_anthropic_subtitle),
+                                        checked = anthropicCacheBreakpoints,
+                                        onCheckedChange = { anthropicCacheBreakpoints = it }
+                                    )
+                                }
+                                SettingsDivider()
+                                ProviderSwitchRow(
+                                    title = stringResource(R.string.provider_multi_key_title),
+                                    subtitle = stringResource(R.string.provider_multi_key_subtitle),
+                                    checked = multiKeyEnabled,
+                                    onCheckedChange = { enabled ->
+                                        multiKeyEnabled = enabled
+                                        // 开启时把已填的单 Key 带进列表，避免输入框隐藏后看起来「刚填的 Key 丢了」。
+                                        if (enabled && apiKeys.isEmpty() && apiKey.isNotBlank()) apiKeys.add(ProviderKey(apiKey))
+                                    }
+                                )
+                                if (multiKeyEnabled) {
+                                    SettingsDivider()
+                                    SettingsRow(
+                                        icon = null,
+                                        title = stringResource(R.string.provider_multi_key_manage),
+                                        onClick = { showKeysPage = true },
+                                        trailing = {
+                                            Text(
+                                                text = stringResource(
+                                                    R.string.provider_multi_key_summary,
+                                                    apiKeys.count { it.value.isNotBlank() },
+                                                    keyRotationStrategyLabel(keyRotationStrategy)
+                                                ),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    )
+                                }
+                                SettingsDivider()
+                                SettingsRow(
+                                    icon = null,
+                                    title = stringResource(R.string.proxy_title),
+                                    onClick = { showProxyPage = true },
+                                    trailing = {
+                                        Text(
+                                            text = if (proxyEnabled) {
+                                                "${proxyTypeLabel(proxyType)} ${proxyHost}:${proxyPort}"
+                                            } else {
+                                                stringResource(R.string.provider_proxy_off)
+                                            },
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                )
+                            }
+
+                            // ── 自定义面板，一并收在高级设置里──
+                            SettingsGroupHeader(text = stringResource(R.string.provider_section_dashboard))
+                            SettingsGroup {
+                                ProviderTextFieldRow(
+                                    label = stringResource(R.string.provider_dashboard_script),
+                                    value = dashboardScriptPath,
+                                    onValueChange = { dashboardScriptPath = it },
+                                    placeholder = stringResource(R.string.provider_dashboard_script_placeholder),
+                                    trailing = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            if (dashboardScriptPath.isNotBlank()) {
+                                                IconButton(
+                                                    onClick = { dashboardScriptPath = "" },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = FeatherIcons.X,
+                                                        contentDescription = stringResource(R.string.provider_dashboard_clear_script),
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
+                                            }
+                                            IconButton(
+                                                onClick = {
+                                                    showScriptPickerSheet = true
+                                                    viewModel.loadDashboardScripts()
+                                                },
+                                                modifier = Modifier.size(36.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = FeatherIcons.Folder,
+                                                    contentDescription = stringResource(R.string.provider_dashboard_select_script),
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                )
+                                SettingsDivider()
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = Spacing.lg, vertical = 11.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = stringResource(R.string.provider_dashboard_test_btn),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = stringResource(R.string.provider_dashboard_script_desc),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Spacer(Modifier.width(Spacing.sm))
+                                    IconButton(
+                                        onClick = {
+                                            focusManager.clearFocus()
+                                            viewModel.testDashboardScript(currentConfig(), dashboardScriptPath)
+                                        },
+                                        enabled = dashboardScriptPath.isNotBlank() && dashboardTestState !is ProviderDashboardState.Loading,
+                                        modifier = Modifier.size(36.dp)
+                                    ) {
+                                        if (dashboardTestState is ProviderDashboardState.Loading) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(18.dp),
+                                                strokeWidth = 2.dp,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        } else {
                                             Icon(
-                                                imageVector = FeatherIcons.X,
-                                                contentDescription = stringResource(R.string.provider_dashboard_clear_script),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                modifier = Modifier.size(16.dp)
+                                                imageVector = FeatherIcons.Play,
+                                                contentDescription = stringResource(R.string.provider_dashboard_run_test),
+                                                tint = if (dashboardScriptPath.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                                modifier = Modifier.size(20.dp)
                                             )
                                         }
                                     }
-                                    IconButton(
-                                        onClick = {
-                                            showScriptPickerSheet = true
-                                            viewModel.loadDashboardScripts()
-                                        },
-                                        modifier = Modifier.size(36.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = FeatherIcons.Folder,
-                                            contentDescription = stringResource(R.string.provider_dashboard_select_script),
-                                            tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(20.dp)
+                                }
+                                SettingsDivider()
+                                SettingsRow(
+                                    icon = null,
+                                    title = stringResource(R.string.provider_script_params_title),
+                                    subtitle = if (scriptParams.isEmpty()) {
+                                        stringResource(R.string.provider_script_params_desc)
+                                    } else {
+                                        stringResource(R.string.provider_script_params_count, scriptParams.count { it.first.isNotBlank() })
+                                    },
+                                    onClick = { showScriptParamsSheet = true },
+                                    trailing = {
+                                        Text(
+                                            text = if (scriptParams.isEmpty()) {
+                                                stringResource(R.string.provider_script_param_add)
+                                            } else {
+                                                stringResource(R.string.provider_script_param_manage)
+                                            },
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
-                                }
-                            }
-                        )
-                        SettingsDivider()
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = Spacing.lg, vertical = 11.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = stringResource(R.string.provider_dashboard_test_btn),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface
                                 )
-                                Text(
-                                    text = stringResource(R.string.provider_dashboard_script_desc),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Spacer(Modifier.width(Spacing.sm))
-                            IconButton(
-                                onClick = {
-                                    focusManager.clearFocus()
-                                    viewModel.testDashboardScript(currentConfig(), dashboardScriptPath)
-                                },
-                                enabled = dashboardScriptPath.isNotBlank() && dashboardTestState !is ProviderDashboardState.Loading,
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                if (dashboardTestState is ProviderDashboardState.Loading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(18.dp),
-                                        strokeWidth = 2.dp,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = FeatherIcons.Play,
-                                        contentDescription = stringResource(R.string.provider_dashboard_run_test),
-                                        tint = if (dashboardScriptPath.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                        modifier = Modifier.size(20.dp)
+                                if (dashboardTestState !is ProviderDashboardState.Idle) {
+                                    SettingsDivider()
+                                    DashboardTestResultBox(
+                                        state = dashboardTestState,
+                                        providerName = name.ifBlank { stringResource(R.string.provider_dashboard_preview_title) }
                                     )
                                 }
                             }
-                        }
-                        SettingsDivider()
-                        SettingsRow(
-                            icon = null,
-                            title = stringResource(R.string.provider_script_params_title),
-                            subtitle = if (scriptParams.isEmpty()) {
-                                stringResource(R.string.provider_script_params_desc)
-                            } else {
-                                stringResource(R.string.provider_script_params_count, scriptParams.count { it.first.isNotBlank() })
-                            },
-                            onClick = { showScriptParamsSheet = true },
-                            trailing = {
-                                Text(
-                                    text = if (scriptParams.isEmpty()) {
-                                        stringResource(R.string.provider_script_param_add)
-                                    } else {
-                                        stringResource(R.string.provider_script_param_manage)
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        )
-                        if (dashboardTestState !is ProviderDashboardState.Idle) {
-                            SettingsDivider()
-                            DashboardTestResultBox(
-                                state = dashboardTestState,
-                                providerName = name.ifBlank { stringResource(R.string.provider_dashboard_preview_title) }
-                            )
                         }
                     }
                 }

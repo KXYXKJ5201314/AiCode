@@ -1488,7 +1488,9 @@
     <!-- Provider Editor -->
     <string name="provider_section_basic">基本信息</string>
     <string name="provider_section_type">上游格式</string>
-    <string name="provider_section_options">选项</string>    <string name="provider_show_api_key">显示密钥</string>
+    <string name="provider_section_options">选项</string>
+    <string name="provider_section_advanced">高级设置</string>
+    <string name="provider_show_api_key">显示密钥</string>
     <string name="provider_hide_api_key">隐藏密钥</string>
     <string name="provider_api_key">API Key</string>
     <string name="provider_base_url">Base URL</string>
