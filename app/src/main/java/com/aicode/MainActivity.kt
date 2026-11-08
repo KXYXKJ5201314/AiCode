@@ -743,6 +743,18 @@ fun AppNavigation(
                                         if (onboardingUiState.active && onboardingUiState.step == OnboardingStep.SIMULATE_CHOOSE_MODEL) {
                                             onboardingCoordinator.goToStep(OnboardingStep.OPEN_MODEL_PICKER)
                                         }
+                                    },
+                                    onSelectWorkspaceInOnboarding = {
+                                        // 演示行被点：只推进引导，绝不真正切换工作区。
+                                        if (onboardingUiState.active && onboardingUiState.step == OnboardingStep.SIMULATE_CHOOSE_WORKSPACE) {
+                                            onboardingCoordinator.nextStep()
+                                        }
+                                    },
+                                    onDismissWorkspaceSheetInOnboarding = {
+                                        // 关掉演示面板：退回「打开工作区」那一步重新引导。
+                                        if (onboardingUiState.active && onboardingUiState.step == OnboardingStep.SIMULATE_CHOOSE_WORKSPACE) {
+                                            onboardingCoordinator.goToStep(OnboardingStep.OPEN_WORKSPACE_PICKER)
+                                        }
                                     }
                                 )
                             }
@@ -1010,6 +1022,14 @@ fun AppNavigation(
                         }
                         onboardingCoordinator.nextStep()
                     }
+                    OnboardingStep.OPEN_WORKSPACE_PICKER -> {
+                        // 只是提示点顶栏按钮，真正弹出示意面板在下一步。
+                        onboardingCoordinator.nextStep()
+                    }
+                    OnboardingStep.SIMULATE_CHOOSE_WORKSPACE -> {
+                        // 纯演示步骤：绝不切换工作区，也不写任何工作区记录，只推进流程。
+                        onboardingCoordinator.nextStep()
+                    }
                     OnboardingStep.SEND_MESSAGE -> {
                         onboardingCoordinator.complete()
                     }
@@ -1052,6 +1072,15 @@ fun AppNavigation(
                         if (current != null && current.models.isNotEmpty()) {
                             agentViewModel.setSessionProviderModel(current.id, current.effectiveModel.ifEmpty { current.models.first() })
                         }
+                        onboardingCoordinator.nextStep()
+                    }
+                    OnboardingStep.OPEN_WORKSPACE_PICKER -> {
+                        // 点高亮按钮：故意不真正打开工作区面板（会露出真实/空列表），
+                        // 直接进下一步由 WorkspaceDemoSheet 演示面板结构。
+                        onboardingCoordinator.nextStep()
+                    }
+                    OnboardingStep.SIMULATE_CHOOSE_WORKSPACE -> {
+                        // 纯演示步骤：绝不切换工作区，也不写任何工作区记录，只推进流程。
                         onboardingCoordinator.nextStep()
                     }
                     OnboardingStep.SEND_MESSAGE -> {

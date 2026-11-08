@@ -17,7 +17,10 @@ import com.aicode.R
  *    此步不发起网络请求，也不会写入供应商配置。
  * 8. [OPEN_MODEL_PICKER]: 回到主页，聚焦模型选择按钮，提示打开面板。
  * 9. [SIMULATE_CHOOSE_MODEL]: 蒙版上模拟主页模型选择面板，演示选择模型。
- * 10. [SEND_MESSAGE]: 主页聚焦底部输入框，提示输入内容发送第一条消息开启对话。
+ * 10. [OPEN_WORKSPACE_PICKER]: 聚焦顶栏工作区按钮，提示打开工作区面板。
+ * 11. [SIMULATE_CHOOSE_WORKSPACE]: 蒙版上模拟工作区面板，用演示目录展示如何指定 AI 的操作目录。
+ *     此步只在蒙版上演示，不会真正切换工作区、也不会写入任何工作区记录。
+ * 12. [SEND_MESSAGE]: 主页聚焦底部输入框，提示输入内容发送第一条消息开启对话。
  */
 enum class OnboardingStep(
     val route: String,
@@ -68,6 +71,16 @@ enum class OnboardingStep(
         route = "chat",
         titleRes = R.string.onboarding_choose_model_in_sheet_title,
         descRes = R.string.onboarding_choose_model_in_sheet_desc
+    ),
+    OPEN_WORKSPACE_PICKER(
+        route = "chat",
+        titleRes = R.string.onboarding_open_workspace_picker_title,
+        descRes = R.string.onboarding_open_workspace_picker_desc
+    ),
+    SIMULATE_CHOOSE_WORKSPACE(
+        route = "chat",
+        titleRes = R.string.onboarding_choose_workspace_in_sheet_title,
+        descRes = R.string.onboarding_choose_workspace_in_sheet_desc
     ),
     SEND_MESSAGE(
         route = "chat",

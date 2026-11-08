@@ -1974,6 +1974,13 @@
     <string name="onboarding_open_model_picker_desc">回到主页，点击输入框左侧的模型图标打开选择面板。</string>
     <string name="onboarding_choose_model_in_sheet_title">选择会话模型</string>
     <string name="onboarding_choose_model_in_sheet_desc">点击刚刚添加的模型，指定当前对话使用的 AI。</string>
+    <string name="onboarding_open_workspace_picker_title">打开工作区</string>
+    <string name="onboarding_open_workspace_picker_desc">点击顶栏右侧的文件夹按钮，可以为当前会话指定 AI 的工作目录（工作区）。</string>
+    <string name="onboarding_choose_workspace_in_sheet_title">选择工作区</string>
+    <string name="onboarding_choose_workspace_in_sheet_desc">以下为演示用的示例目录。选中后 AI 的文件读写与命令都会以该目录为根；这里只是演示，不会真的切换你的工作区。</string>
+    <string name="onboarding_choose_workspace_in_sheet_demo_hint">示例目录（演示用，不写入）</string>
+    <string name="onboarding_choose_workspace_demo_myapp">my-app</string>
+    <string name="onboarding_choose_workspace_demo_website">website</string>
     <string name="onboarding_send_message_title">开始对话</string>
     <string name="onboarding_send_message_desc">模型已就绪，在输入框输入你的编程需求或问题，开始与 AI 助手协同工作。</string>
 

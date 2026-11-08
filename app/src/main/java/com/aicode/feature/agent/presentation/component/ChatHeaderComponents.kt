@@ -139,7 +139,11 @@ internal fun ChatHeader(
                         viewModel = workspaceViewModel,
                         hasRunningSessions = hasRunningSessions,
                         onSwitchConfirmed = onSwitchWorkspaceConfirmed,
-                        modifier = Modifier.size(36.dp),
+                        // 新手引导第 10 步聚焦这个按钮：并到既有 modifier 上，
+                        // 不能另传一个 modifier 参数（会覆盖掉 size 约束）。
+                        modifier = Modifier
+                            .size(36.dp)
+                            .onboardingTarget(OnboardingStep.OPEN_WORKSPACE_PICKER),
                         iconSize = 20.dp,
                         onWorkspacePicked = onWorkspacePicked,
                         sessionWorkspace = sessionWorkspace

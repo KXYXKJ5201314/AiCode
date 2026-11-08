@@ -93,6 +93,7 @@ import com.aicode.feature.agent.presentation.QueuedRequest
 import com.aicode.feature.agent.presentation.hasVisibleContent
 import com.aicode.feature.onboarding.domain.OnboardingStep
 import com.aicode.feature.onboarding.presentation.onboardingTarget
+import com.aicode.feature.workspace.presentation.component.WorkspaceDemoSheet
 import com.aicode.feature.settings.presentation.SettingsViewModel
 import com.aicode.feature.settings.domain.model.AIProviderConfig
 import com.aicode.feature.settings.domain.model.ProviderType
@@ -689,6 +690,8 @@ fun AIChatPanel(
     onboardingStep: OnboardingStep? = null,
     onSelectModelInOnboarding: (() -> Unit)? = null,
     onDismissModelSheetInOnboarding: (() -> Unit)? = null,
+    onSelectWorkspaceInOnboarding: (() -> Unit)? = null,
+    onDismissWorkspaceSheetInOnboarding: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val agentState by viewModel.agentState.collectAsStateWithLifecycle()
@@ -2081,7 +2084,14 @@ fun AIChatPanel(
         // Dialog 是独立 window、不占父布局尺寸，挂在 Scaffold 之后即可覆盖整屏 ——
         // 平板双栏下不会只盖住聊天列，也不会被 MainActivity 画在最上层的全局背景水印压住。
         ImageViewerHost(state = imageViewerState, load = chatImageLoad)
-    }
+        // 新手引导第 11 步：纯演示的工作区面板。
+        // 只在引导走到该步时出现；点示例行或关闭都只推进引导流程，绝不切换真实工作区。
+        WorkspaceDemoSheet(
+            visible = onboardingStep == OnboardingStep.SIMULATE_CHOOSE_WORKSPACE,
+            onDismiss = { onDismissWorkspaceSheetInOnboarding?.invoke() },
+            onDemoSelected = { onSelectWorkspaceInOnboarding?.invoke() }
+        )
+}
 }
 
 /**

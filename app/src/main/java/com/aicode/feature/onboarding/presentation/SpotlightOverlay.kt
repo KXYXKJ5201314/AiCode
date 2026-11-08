@@ -113,7 +113,8 @@ fun SpotlightOverlay(
         val screenHeightPx = constraints.maxHeight.toFloat()
 
         val isSheetStep = currentStep == OnboardingStep.SIMULATE_FETCH_DIALOG ||
-            currentStep == OnboardingStep.SIMULATE_CHOOSE_MODEL
+            currentStep == OnboardingStep.SIMULATE_CHOOSE_MODEL ||
+            currentStep == OnboardingStep.SIMULATE_CHOOSE_WORKSPACE
 
         // 针对目标形态（图标小按钮 vs 宽组件）自适应计算最佳聚焦尺寸与安全边距，杜绝出界切边
         val (optimalTargetRect, holeRadiusPx) = remember(targetRect, screenWidthPx, screenHeightPx, density, isSheetStep) {
