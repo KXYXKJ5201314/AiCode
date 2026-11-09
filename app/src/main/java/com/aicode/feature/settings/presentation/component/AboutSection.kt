@@ -549,6 +549,6 @@ private fun loadAppIconBitmap(context: Context): ImageBitmap? {
     }.getOrNull()
 }
 
-private const val GITHUB_REPO_URL = "https://github.com/jieapi/aicode"
-private const val LICENSE_URL = "https://github.com/jieapi/aicode/blob/main/LICENSE"
+private const val GITHUB_REPO_URL = "https://github.com/KXYXKJ5201314/AiCode"
+private const val LICENSE_URL = "https://github.com/KXYXKJ5201314/AiCode/blob/main/LICENSE"
 private const val ICON_PX_DP = 48
