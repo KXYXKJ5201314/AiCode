@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AiCode Kongxin</string>
+    <string name="app_name">AiCode Kongxin Edition</string>
     <string name="common_tool_missing_argument">Missing parameter: %1$s.</string>
     <string name="plan_mode_invalid_action">Invalid action: %1$s. Supported values: enter or exit.</string>
     <string name="plan_mode_already_active">Already in PLAN mode.</string>
@@ -371,7 +371,7 @@
     <string name="settings_permission_storage_denied_desc">Storage permission was denied and can no longer be requested. Please enable it manually in system settings</string>
     <!-- Storage permission auto prompt dialog -->
     <string name="storage_permission_prompt_title">Storage permission required</string>
-    <string name="storage_permission_prompt_desc">AiCode Kongxin needs access to device storage for the following features:</string>
+    <string name="storage_permission_prompt_desc">AiCode Kongxin Edition needs access to device storage for the following features:</string>
     <string name="storage_permission_use_workspace">Select a folder on your phone as a workspace for the AI to read and write</string>
     <string name="storage_permission_use_container">Extract and run the Linux container image</string>
     <string name="storage_permission_use_export">Export logs, backups and generated files</string>
@@ -441,7 +441,7 @@
     <string name="credential_auto_inject_title">Auto-inject credentials</string>
     <string name="credential_auto_inject_hint">Sync git credentials saved in the app to this remote server, effective only for repositories under the current workspace root. Does not affect your manual git usage on the server.</string>
     <string name="credential_auto_inject_prompt_title">Auto-inject git credentials?</string>
-    <string name="credential_auto_inject_prompt_body">Allow AiCode Kongxin to sync git credentials saved in the app to this remote server? It only applies to repositories under the current workspace root and will not modify the server\'s global git config.</string>
+    <string name="credential_auto_inject_prompt_body">Allow AiCode Kongxin Edition to sync git credentials saved in the app to this remote server? It only applies to repositories under the current workspace root and will not modify the server\'s global git config.</string>
     <string name="credential_auto_inject_enable">Enable</string>
     <string name="common_rename">Rename</string>
     <string name="common_hide">Hide</string>
@@ -587,10 +587,10 @@
     <string name="about_update_verify_not_newer">Package version is not newer than the installed one</string>
     <string name="about_update_install_failed">No app available to install packages</string>
 
-    <string name="agreement_title">Welcome to AiCode Kongxin</string>
+    <string name="agreement_title">Welcome to AiCode Kongxin Edition</string>
     <string name="agreement_terms">User Agreement</string>
     <string name="agreement_privacy">Privacy Policy</string>
-    <string name="agreement_notice_prefix">"Before using AiCode Kongxin, please read and agree to the "</string>
+    <string name="agreement_notice_prefix">"Before using AiCode Kongxin Edition, please read and agree to the "</string>
     <string name="agreement_terms_link">User Agreement</string>
     <string name="agreement_notice_conjunction">" and "</string>
     <string name="agreement_privacy_link">Privacy Policy</string>
@@ -991,7 +991,7 @@
     <!-- Credential List -->
     <string name="credential_empty_hint">No credentials yet, tap + to add</string>
     <string name="credential_empty_title">No Git Credentials</string>
-    <string name="credential_empty_desc">Tap + in the top right to sign in with GitHub or add an access token. AiCode Kongxin then authenticates pushes and pulls automatically</string>
+    <string name="credential_empty_desc">Tap + in the top right to sign in with GitHub or add an access token. AiCode Kongxin Edition then authenticates pushes and pulls automatically</string>
 
     <!-- Credential Add / Quick Login -->
     <string name="credential_add_sheet_title">Add Credential</string>
@@ -1024,7 +1024,7 @@
     <string name="credential_device_waiting_desc">Credentials will be bound and saved automatically once authorized</string>
     <string name="credential_device_success_title">Authorization Successful</string>
     <string name="credential_device_success">Signed in as %1$s and credential saved</string>
-    <string name="credential_device_install_required">Signed in as %1$s. You still need to install AiCode Kongxin on your repositories before pushing/pulling code.</string>
+    <string name="credential_device_install_required">Signed in as %1$s. You still need to install AiCode Kongxin Edition on your repositories before pushing/pulling code.</string>
     <string name="credential_device_install_now">Install</string>
     <string name="credential_device_install_later">Later</string>
     <string name="credential_device_failed_title">Authorization Incomplete</string>
@@ -1854,7 +1854,7 @@
     <string name="crash_restart">Restart app</string>
     <string name="crash_exit">Exit app</string>
     <string name="crash_log_hint">Full log files at: %1$s</string>
-    <string name="crash_report_title">AiCode Kongxin Crash Report</string>
+    <string name="crash_report_title">AiCode Kongxin Edition Crash Report</string>
     <string name="crash_report_time">Time: %1$s</string>
     <string name="crash_report_version">Version: %1$s</string>
     <string name="crash_report_device">Device: %1$s</string>
