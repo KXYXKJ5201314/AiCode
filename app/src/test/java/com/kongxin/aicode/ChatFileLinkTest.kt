@@ -23,7 +23,7 @@ class ChatFileLinkTest {
     @Test
     fun relative_and_container_paths_are_file_paths() {
         assertEquals("notes.md", asChatFilePath("notes.md"))
-        assertEquals("app/src/main/java/com/aicode/MainActivity.kt:42", asChatFilePath("app/src/main/java/com/aicode/MainActivity.kt:42"))
+        assertEquals("app/src/main/java/com/kongxin/aicode/MainActivity.kt:42", asChatFilePath("app/src/main/java/com/kongxin/aicode/MainActivity.kt:42"))
         assertEquals("~/workspace/example.py:1", asChatFilePath("~/workspace/example.py:1"))
         assertEquals("/etc/apk/repositories", asChatFilePath("/etc/apk/repositories"))
     }
