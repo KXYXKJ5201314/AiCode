@@ -59,8 +59,10 @@ import compose.icons.feathericons.Check
 import compose.icons.feathericons.Download
 import compose.icons.feathericons.Github
 import compose.icons.feathericons.Globe
+import compose.icons.feathericons.Info
 import compose.icons.feathericons.RefreshCw
 import compose.icons.feathericons.Tag
+import compose.icons.feathericons.User
 
 /**
  * 关于页：顶部应用信息、版本号（点击手动检查更新）、自动检查更新开关、更新通道、
@@ -180,11 +182,34 @@ internal fun AboutSection(
                 }
             )
             SettingsDivider()
+            // 原版仓库：声明本修改版的上游来源
+            SettingsRow(
+                icon = FeatherIcons.Github,
+                title = stringResource(R.string.about_origin_repo),
+                subtitle = stringResource(R.string.about_origin_repo_desc),
+                onClick = { openUrl(context, ORIGIN_REPO_URL) }
+            )
+            SettingsDivider()
+            // 修改版作者
+            SettingsRow(
+                icon = FeatherIcons.User,
+                title = stringResource(R.string.about_mod_author),
+                subtitle = stringResource(R.string.about_mod_author_desc),
+                onClick = { openUrl(context, MOD_AUTHOR_URL) }
+            )
+            SettingsDivider()
             // GitHub 仓库
             SettingsRow(
                 icon = FeatherIcons.Github,
                 title = stringResource(R.string.about_github_repo),
                 onClick = { openUrl(context, GITHUB_REPO_URL) }
+            )
+            SettingsDivider()
+            // 版权声明：源代码版权归原作者，本版仅作二次修改
+            SettingsRow(
+                icon = FeatherIcons.Info,
+                title = stringResource(R.string.about_copyright_notice),
+                subtitle = stringResource(R.string.about_copyright_notice_desc)
             )
             SettingsDivider()
             // 许可证
@@ -551,4 +576,8 @@ private fun loadAppIconBitmap(context: Context): ImageBitmap? {
 
 private const val GITHUB_REPO_URL = "https://github.com/KXYXKJ5201314/AiCode"
 private const val LICENSE_URL = "https://github.com/KXYXKJ5201314/AiCode/blob/main/LICENSE"
+/** 原版（上游）仓库：本修改版基于该项目二次修改。 */
+private const val ORIGIN_REPO_URL = "https://github.com/jieapi/AiCode"
+/** 修改版作者主页。 */
+private const val MOD_AUTHOR_URL = "https://github.com/KXYXKJ5201314"
 private const val ICON_PX_DP = 48

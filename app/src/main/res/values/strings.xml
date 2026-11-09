@@ -536,6 +536,12 @@
     <!-- About -->
     <string name="about_version">版本</string>
     <string name="about_github_repo">GitHub 仓库</string>
+    <string name="about_origin_repo">原版源码仓库</string>
+    <string name="about_origin_repo_desc">源代码版权归原作者所有，本版仅作二次修改</string>
+    <string name="about_mod_author">修改版作者</string>
+    <string name="about_mod_author_desc">空心游戏科技</string>
+    <string name="about_copyright_notice">版权声明</string>
+    <string name="about_copyright_notice_desc">源代码版权归原作者 jieapi 所有</string>
     <string name="about_license">开源许可证</string>
     <string name="about_description">Android 上的通用 AI Coding Agent · Linux 开发环境 · 支持本地与远程 SSH</string>
     <string name="about_check_update">检查更新</string>

@@ -536,6 +536,12 @@
     <!-- About -->
     <string name="about_version">Version</string>
     <string name="about_github_repo">GitHub Repository</string>
+    <string name="about_origin_repo">Original Source Repository</string>
+    <string name="about_origin_repo_desc">Source copyright belongs to the original author; this is a secondary modification</string>
+    <string name="about_mod_author">Modifier</string>
+    <string name="about_mod_author_desc">Kongxin Game Tech</string>
+    <string name="about_copyright_notice">Copyright Notice</string>
+    <string name="about_copyright_notice_desc">Source copyright belongs to the original author jieapi</string>
     <string name="about_license">Open Source License</string>
     <string name="about_description">Universal AI Coding Agent for Android · Linux dev environment · Local &amp; remote SSH</string>
     <string name="about_check_update">Check for updates</string>
