@@ -370,15 +370,15 @@
     <string name="settings_permission_notification_denied_desc">Background keepalive and agent completion notifications need the notification permission, but the system prompt cannot be shown. Please enable it manually in system settings</string>
     <string name="settings_permission_storage_denied_desc">Storage permission was denied and can no longer be requested. Please enable it manually in system settings</string>
     <!-- Storage permission auto prompt dialog -->
-    <string name="storage_permission_prompt_title">Storage permission required</string>
+    <string name="storage_permission_prompt_title">File access required</string>
     <string name="storage_permission_prompt_desc">AiCode Kongxin Edition needs access to device storage for the following features:</string>
-    <string name="storage_permission_use_workspace">Select a folder on your phone as a workspace for the AI to read and write</string>
-    <string name="storage_permission_use_container">Extract and run the Linux container image</string>
-    <string name="storage_permission_use_export">Export logs, backups and generated files</string>
+    <string name="storage_permission_use_workspace">Open the mod folder you picked and edit the files inside directly</string>
+    <string name="storage_permission_use_container">Run the built-in terminal environment to unpack and pack mod files</string>
+    <string name="storage_permission_use_export">Export logs, backups and the files you generate</string>
     <string name="storage_permission_grant">Grant now</string>
     <string name="storage_permission_open_settings">Open settings</string>
     <string name="storage_permission_later">Later</string>
-    <string name="storage_permission_prompt_desc_all_files">Android 11 and above requires the "All files access" permission to read and write device folders. Tap the button below and enable it on the settings page.</string>
+    <string name="storage_permission_prompt_desc_all_files">Editing mods means reading and writing folders on your phone. Since Android 11 this requires "All files access" — tap the button below and enable it on the settings page.</string>
     <string name="storage_permission_all_files_hint">Tip: look for "All files access" or "Manage all files" on that page.</string>
     <!-- Settings category titles -->
     <string name="settings_category_ai">AI Configuration</string>
@@ -1820,10 +1820,10 @@
     <string name="workspace_name_exists">A workspace with this name already exists</string>
     <string name="workspace_remote_root_create_failed">Failed to create the remote workspace directory. Check the path and server permissions.</string>
     <string name="workspace_remote_default_create_failed">Failed to create the default remote workspace. Check server permissions and disk space.</string>
-    <string name="workspace_add_external">Add External Workspace</string>
-    <string name="workspace_external_added">External workspace "%1$s" added</string>
-    <string name="workspace_external_warning_title">Add External Workspace</string>
-    <string name="workspace_external_warning_message">AI directly reads and writes the real files in the selected directory. Public storage does not support symlinks, so npm, yarn, pnpm, and git operations involving symlinks may fail. Removing the workspace only removes the association and does not delete directory contents.</string>
+    <string name="workspace_add_external">Add Mod Folder</string>
+    <string name="workspace_external_added">Mod folder "%1$s" added</string>
+    <string name="workspace_external_warning_title">Add Mod Folder</string>
+    <string name="workspace_external_warning_message">The AI edits the real files in this folder directly — changes take effect immediately, with no separate copy. Back the folder up first. Removing the workspace only unlinks it and never deletes your files.</string>
     <string name="workspace_external_warning_dont_show_again">Don’t show again</string>
     <string name="workspace_external_warning_continue">Continue</string>
     <string name="workspace_external_remove_confirm">Remove workspace "%1$s"? Only the link is removed; the directory and its files will not be deleted.</string>

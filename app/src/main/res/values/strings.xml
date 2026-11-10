@@ -370,15 +370,15 @@
     <string name="settings_permission_notification_denied_desc">后台保活与 Agent 完成通知需要通知权限才能生效，当前无法弹出系统授权框，请在系统设置中手动开启</string>
     <string name="settings_permission_storage_denied_desc">存储权限已被拒绝且无法再次申请，请在系统设置中手动开启</string>
     <!-- 存储权限自动提示弹窗 -->
-    <string name="storage_permission_prompt_title">需要存储权限</string>
+    <string name="storage_permission_prompt_title">需要文件访问权限</string>
     <string name="storage_permission_prompt_desc">AiCode 空心版 需要访问设备存储才能正常使用以下功能：</string>
-    <string name="storage_permission_use_workspace">把手机上的项目目录选为工作区，让 AI 直接读写</string>
-    <string name="storage_permission_use_container">解压并运行 Linux 容器镜像</string>
-    <string name="storage_permission_use_export">导出日志、备份与生成的文件</string>
+    <string name="storage_permission_use_workspace">打开你选的模组文件夹，直接改里面的文件</string>
+    <string name="storage_permission_use_container">运行内置终端环境，解压、打包模组文件</string>
+    <string name="storage_permission_use_export">导出日志、备份和你生成的文件</string>
     <string name="storage_permission_grant">立即授权</string>
     <string name="storage_permission_open_settings">去设置开启</string>
     <string name="storage_permission_later">以后再说</string>
-    <string name="storage_permission_prompt_desc_all_files">Android 11 及以上需要「所有文件访问」权限才能读写设备目录。请点击下方按钮，在打开的设置页中开启该项。</string>
+    <string name="storage_permission_prompt_desc_all_files">改模组要读写手机上的文件夹，Android 11 起必须开启「所有文件访问」。点下方按钮，在打开的设置页里打开它。</string>
     <string name="storage_permission_all_files_hint">提示：设置页中名为「所有文件访问」或「管理所有文件」。</string>
     <!-- Settings category titles -->
     <string name="settings_category_ai">AI 配置</string>
@@ -1819,10 +1819,10 @@
     <string name="workspace_name_exists">已存在同名工作区</string>
     <string name="workspace_remote_root_create_failed">远程工作区目录创建失败，请检查路径与服务器权限</string>
     <string name="workspace_remote_default_create_failed">远程默认工作区创建失败，请检查服务器权限与磁盘空间</string>
-    <string name="workspace_add_external">添加外部工作区</string>
-    <string name="workspace_external_added">已添加外部工作区「%1$s」</string>
-    <string name="workspace_external_warning_title">添加外部工作区</string>
-    <string name="workspace_external_warning_message">AI 会直接读写所选目录中的真实文件。公共存储不支持软链，npm、yarn、pnpm、git 涉及软链的操作可能失败；移除工作区只解除关联，不会删除目录内容。</string>
+    <string name="workspace_add_external">添加模组文件夹</string>
+    <string name="workspace_external_added">已添加模组文件夹「%1$s」</string>
+    <string name="workspace_external_warning_title">添加模组文件夹</string>
+    <string name="workspace_external_warning_message">AI 会直接修改这个文件夹里的真实文件，改完立刻生效，不会另存副本。建议改之前先备份一份。移除工作区只是取消关联，不会删除你的文件。</string>
     <string name="workspace_external_warning_dont_show_again">不再提示</string>
     <string name="workspace_external_warning_continue">继续</string>
     <string name="workspace_external_remove_confirm">移除工作区「%1$s」？仅解除关联，不会删除该目录及其文件。</string>
