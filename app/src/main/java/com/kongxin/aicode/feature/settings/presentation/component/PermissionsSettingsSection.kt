@@ -48,6 +48,7 @@ import compose.icons.feathericons.Folder
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Shield
 import compose.icons.feathericons.XCircle
+import compose.icons.feathericons.Zap
 import kotlinx.coroutines.delay
 
 /**
