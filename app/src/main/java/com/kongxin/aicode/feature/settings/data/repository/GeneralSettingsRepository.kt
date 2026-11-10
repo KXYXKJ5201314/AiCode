@@ -87,11 +87,11 @@ class GeneralSettingsRepository @Inject constructor(
         context.generalDataStore.edit { it[AUTO_REMOVE_STALE_MODELS_KEY] = enabled }
     }
 
-    /** 启动时会话偏好流；未设置或值无法识别时回退到 [StartupSessionMode.NEW_SESSION]。 */
+    /** 启动时会话偏好流；未设置或值无法识别时回退到 [StartupSessionMode.RECENT_SESSION]（默认打开最近会话）。 */
     val startupSessionModeFlow: Flow<StartupSessionMode> = context.generalDataStore.data.map { prefs ->
         when (prefs[STARTUP_SESSION_MODE_KEY]) {
-            StartupSessionMode.RECENT_SESSION.name -> StartupSessionMode.RECENT_SESSION
-            else -> StartupSessionMode.NEW_SESSION
+            StartupSessionMode.NEW_SESSION.name -> StartupSessionMode.NEW_SESSION
+            else -> StartupSessionMode.RECENT_SESSION
         }
     }
 
@@ -111,10 +111,10 @@ class GeneralSettingsRepository @Inject constructor(
     /** 从备份还原自动对齐开关。 */
     suspend fun restoreAutoRemoveStaleModels(enabled: Boolean) = setAutoRemoveStaleModels(enabled)
 
-    /** 从备份还原启动时会话偏好；旧备份无此字段（null）或值无法识别时回退新开会话。 */
+    /** 从备份还原启动时会话偏好；旧备份无此字段（null）或值无法识别时回退打开最近会话。 */
     suspend fun restoreStartupSessionMode(mode: String?) {
         setStartupSessionMode(
-            StartupSessionMode.entries.firstOrNull { it.name == mode } ?: StartupSessionMode.NEW_SESSION
+            StartupSessionMode.entries.firstOrNull { it.name == mode } ?: StartupSessionMode.RECENT_SESSION
         )
     }
 

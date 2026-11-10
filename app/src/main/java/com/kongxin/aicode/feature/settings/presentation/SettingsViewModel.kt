@@ -573,7 +573,7 @@ class SettingsViewModel @Inject constructor(
     private val _autoRemoveStaleModels = MutableStateFlow(true)
     val autoRemoveStaleModels: StateFlow<Boolean> = _autoRemoveStaleModels.asStateFlow()
 
-    private val _startupSessionMode = MutableStateFlow(StartupSessionMode.NEW_SESSION)
+    private val _startupSessionMode = MutableStateFlow(StartupSessionMode.RECENT_SESSION)
     val startupSessionMode: StateFlow<StartupSessionMode> = _startupSessionMode.asStateFlow()
 
     private val _firstByteTimeoutSec = MutableStateFlow(300)
