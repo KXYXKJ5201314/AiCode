@@ -474,7 +474,7 @@
     <string name="chat_image_too_large">Image exceeds %1$s, please compress and retry</string>
     <string name="chat_attachment_uploading">Uploading %1$d files…</string>
     <string name="chat_uploaded_to">Uploaded to %1$s</string>
-    <string name="chat_select_workspace_first">Select a workspace first (the folder holding your mods or dataS)</string>
+    <string name="chat_select_workspace_first">Select a mod folder first</string>
     <string name="chat_read_file_failed">Cannot read the selected file</string>
     <string name="chat_camera_file_failed">Cannot create camera file</string>
     <string name="chat_workspace_unavailable">Workspace unavailable</string>
@@ -1810,9 +1810,9 @@
     <string name="workspace_switch">Switch Workspace</string>
     <string name="workspace_switch_confirm">Switching workspace will stop all running AI sessions and close terminal tabs in the current workspace. Continue?</string>
     <string name="workspace_confirm">Confirm</string>
-    <string name="workspace_open">Open Workspace</string>
-    <string name="workspace_empty_hint">No workspaces, tap %1$s to create one</string>
-    <string name="workspace_empty_hint_local">No workspace yet. Tap "Add external workspace" at the top right and pick the folder holding your Farming Simulator mods or dataS</string>
+    <string name="workspace_open">Select Mod Folder</string>
+    <string name="workspace_empty_hint">No mod folder yet, tap %1$s to create one</string>
+    <string name="workspace_empty_hint_local">No mod folder yet. Tap "Add Mod Folder" above and pick the folder where you keep your mods to get started</string>
     <string name="workspace_delete">Delete Workspace</string>
     <string name="workspace_delete_confirm">Delete "%1$s"? All files in this directory and this workspace\'s chats will be deleted and cannot be undone.</string>
     <string name="workspace_new_workspace">New Workspace</string>
