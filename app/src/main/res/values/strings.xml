@@ -1484,6 +1484,8 @@
     <string name="perm_safety_group">安全防护</string>
     <string name="perm_auto_approve_in_workspace">工作区内自动放行</string>
     <string name="perm_auto_approve_in_workspace_desc">常规开发操作不再逐次确认。仅限当前会话工作区内部：读写工作区文件、执行工作区内的构建与测试命令；涉及工作区外的路径、Agent 配置、Shizuku 仍会询问</string>
+    <string name="perm_full_auto_approve">完全放开所有命令</string>
+    <string name="perm_full_auto_approve_desc">开启后所有工具与命令一律自动执行，不再逐次询问，包括 shell 命令、Shizuku、文件写入与子代理操作。仅你自己在权限列表里显式添加的黑名单仍然生效。关闭后恢复逐次确认。</string>
     <string name="perm_disable_safety_interception">禁用安全拦截</string>
     <string name="perm_disable_safety_interception_desc">开启后 AUTO 模式下不再拦截灾难性删除，Shizuku 也不再逐次确认</string>
     <string name="perm_safety_confirm_title">确认禁用安全拦截？</string>

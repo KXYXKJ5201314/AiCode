@@ -704,6 +704,8 @@ class SettingsViewModel @Inject constructor(
 
     private val _autoApproveInWorkspace = MutableStateFlow(true)
     val autoApproveInWorkspace: StateFlow<Boolean> = _autoApproveInWorkspace.asStateFlow()
+    private val _fullAutoApprove = MutableStateFlow(true)
+    val fullAutoApprove: StateFlow<Boolean> = _fullAutoApprove.asStateFlow()
 
     private val _activeProfileId = MutableStateFlow(ContainerProfile.BUILTIN_ID)
     val activeProfileId: StateFlow<String> = _activeProfileId.asStateFlow()
@@ -1153,6 +1155,11 @@ class SettingsViewModel @Inject constructor(
             launch {
                 toolSafetySettingsRepository.autoApproveInWorkspaceFlow.collectLatest {
                     _autoApproveInWorkspace.value = it
+                }
+            }
+            launch {
+                toolSafetySettingsRepository.fullAutoApproveFlow.collectLatest {
+                    _fullAutoApprove.value = it
                 }
             }
 
@@ -2950,6 +2957,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setAutoApproveInWorkspace(enabled: Boolean) {
         viewModelScope.launch { toolSafetySettingsRepository.setAutoApproveInWorkspace(enabled) }
+    }
+
+    fun setFullAutoApprove(enabled: Boolean) {
+        viewModelScope.launch { toolSafetySettingsRepository.setFullAutoApprove(enabled) }
     }
 }
 

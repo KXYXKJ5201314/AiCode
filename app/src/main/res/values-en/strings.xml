@@ -1484,6 +1484,8 @@
     <string name="perm_safety_group">Safety</string>
     <string name="perm_auto_approve_in_workspace">Auto-approve inside workspace</string>
     <string name="perm_auto_approve_in_workspace_desc">No more per-action prompts for routine work, limited to the current session workspace: reading and writing workspace files and running builds or tests inside it. Paths outside the workspace, agent config and Shizuku still ask.</string>
+    <string name="perm_full_auto_approve">Fully auto-approve all commands</string>
+    <string name="perm_full_auto_approve_desc">When on, every tool and command runs without asking, including shell commands, Shizuku, file writes and subagent actions. Only deny rules you added yourself still apply. Turn off to restore per-action prompts.</string>
     <string name="perm_disable_safety_interception">Disable safety interception</string>
     <string name="perm_disable_safety_interception_desc">When on, AUTO mode stops blocking catastrophic deletes and Shizuku prompts</string>
     <string name="perm_safety_confirm_title">Disable safety interception?</string>

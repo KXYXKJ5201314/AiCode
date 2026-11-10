@@ -99,6 +99,10 @@ class SessionUseCase @Inject constructor(
     suspend fun getMostRecentSessionOfWorkspace(workspacePath: String): ChatSessionEntity? {
         return chatSessionDao.getLatestRootSessionByWorkspace(workspacePath)
     }
+    /** 全局最近更新的根会话（不限工作区）。会话可各自绑定不同工作区，启动时不能只看全局当前工作区。 */
+    suspend fun getMostRecentSessionGlobal(): ChatSessionEntity? {
+        return chatSessionDao.getLatestRootSessionGlobal()
+    }
 
     /** 工作区下可复用的空会话（从未发送过消息的根会话，取最近更新的一个），供「新建会话」直接切过去。 */
     suspend fun getEmptySessionOfWorkspace(workspacePath: String): ChatSessionEntity? {
@@ -117,14 +121,10 @@ class SessionUseCase @Inject constructor(
 
     /** 回收工作区下多余的空会话（从未发送过消息），保留 [keepId]；保证列表最多一个空会话。 */
     suspend fun recycleEmptySessions(workspacePath: String, keepId: String? = null): Int {
-        var count = 0
-        chatSessionDao.getRootSessionsByWorkspaceOnce(workspacePath).forEach { session ->
-            if (session.id != keepId && !agentMessageDao.hasMessages(session.id)) {
-                deleteSession(session.id)
-                count++
-            }
-        }
-        return count
+        // 空会话不再物理删除：侧边栏已用「空会话过滤」隐藏它们，删库没有观感收益，
+        // 却会在消息写入异常/工作区改绑等情况下把用户会话永久抹掉（表现为「退出再打开会话没了」）。
+        // 保留该方法签名以免改动调用方，实际不删任何数据。
+        return 0
     }
 
     /**

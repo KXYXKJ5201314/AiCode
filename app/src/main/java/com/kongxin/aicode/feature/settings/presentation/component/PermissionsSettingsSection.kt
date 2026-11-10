@@ -62,6 +62,8 @@ internal fun PermissionsSection(
     globalRules: List<PermissionRule>,
     disableSafetyInterception: Boolean,
     autoApproveInWorkspace: Boolean,
+    fullAutoApprove: Boolean,
+    onToggleFullAutoApprove: (Boolean) -> Unit,
     onToggleAutoApproveInWorkspace: (Boolean) -> Unit,
     onToggleSafetyInterception: (Boolean) -> Unit,
     onDeleteProject: (PermissionRule) -> Unit,
@@ -83,6 +85,19 @@ internal fun PermissionsSection(
     ) {
         SettingsGroupHeader(text = stringResource(R.string.perm_safety_group))
         SettingsGroup {
+            // 完全放开：默认开启，所有命令与工具不再逐次确认。放在最上面，因为这是最常改的开关。
+            SettingsRow(
+                icon = FeatherIcons.Zap,
+                title = stringResource(R.string.perm_full_auto_approve),
+                subtitle = stringResource(R.string.perm_full_auto_approve_desc),
+                trailing = {
+                    AppSwitch(
+                        checked = fullAutoApprove,
+                        onCheckedChange = { onToggleFullAutoApprove(it) }
+                    )
+                }
+            )
+            SettingsDivider()
             // 工作区内自动放行：默认开启，避免为每次 npm install / 改文件点允许；
             // 越出工作区的操作仍然逐次询问，所以不需要用户切 AUTO。
             SettingsRow(

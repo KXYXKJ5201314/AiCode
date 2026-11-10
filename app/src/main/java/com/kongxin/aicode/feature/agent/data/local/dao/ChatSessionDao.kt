@@ -48,6 +48,20 @@ interface ChatSessionDao {
     /** 最近更新的根会话（忽略置顶，仅按 updatedAt 降序），供启动时「打开最近会话」。 */
     @Query("SELECT * FROM chat_sessions WHERE workspacePath = :workspacePath AND parentId IS NULL ORDER BY updatedAt DESC LIMIT 1")
     suspend fun getLatestRootSessionByWorkspace(workspacePath: String): ChatSessionEntity?
+    /**
+     * 最近更新的根会话（全局，不限工作区），供启动时「打开最近会话」。
+     *
+     * 会话可以各自绑定不同工作区（顶栏工作区按钮是会话级改绑），只按全局当前工作区查
+     * 会漏掉绑在别的工作区下的会话，表现为「退出再打开会话没了」。故启动时跨工作区找。
+     */
+    @Query("SELECT * FROM chat_sessions WHERE parentId IS NULL ORDER BY updatedAt DESC LIMIT 1")
+    suspend fun getLatestRootSessionGlobal(): ChatSessionEntity?
+    /** 全局（不限工作区）所有根会话，供侧边栏跨工作区列出聊天记录。 */
+    @Query("SELECT * FROM chat_sessions WHERE parentId IS NULL ORDER BY isPinned DESC, updatedAt DESC")
+    fun getAllRootSessionsGlobal(): Flow<List<ChatSessionEntity>>
+    /** 全局空会话 id 流（跨工作区），与 [getAllRootSessionsGlobal] 配合做侧边栏过滤。 */
+    @Query("SELECT id FROM chat_sessions WHERE parentId IS NULL AND NOT EXISTS (SELECT 1 FROM agent_messages WHERE sessionId = chat_sessions.id)")
+    fun getEmptyRootSessionIdsGlobalFlow(): Flow<List<String>>
 
     /** 指定父会话的全部子会话（子代理），按最近更新降序。 */
     @Query("SELECT * FROM chat_sessions WHERE parentId = :parentId ORDER BY updatedAt DESC")

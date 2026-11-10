@@ -228,6 +228,7 @@ fun SettingsScreen(
     val currentProjectName by viewModel.currentProjectName.collectAsStateWithLifecycle()
     val disableSafetyInterception by viewModel.disableSafetyInterception.collectAsStateWithLifecycle()
     val autoApproveInWorkspace by viewModel.autoApproveInWorkspace.collectAsStateWithLifecycle()
+    val fullAutoApprove by viewModel.fullAutoApprove.collectAsStateWithLifecycle()
     val keepaliveEnabled by viewModel.keepaliveEnabled.collectAsStateWithLifecycle()
     val screenOnEnabled by viewModel.screenOnEnabled.collectAsStateWithLifecycle()
     val agentSoundEnabled by viewModel.agentSoundEnabled.collectAsStateWithLifecycle()
@@ -1156,6 +1157,8 @@ fun SettingsScreen(
                     globalRules = globalRules,
                     disableSafetyInterception = disableSafetyInterception,
                     autoApproveInWorkspace = autoApproveInWorkspace,
+                    fullAutoApprove = fullAutoApprove,
+                    onToggleFullAutoApprove = { viewModel.setFullAutoApprove(it) },
                     onToggleAutoApproveInWorkspace = { viewModel.setAutoApproveInWorkspace(it) },
                     onToggleSafetyInterception = { viewModel.setDisableSafetyInterception(it) },
                     onDeleteProject = { viewModel.deleteProjectRule(it) },

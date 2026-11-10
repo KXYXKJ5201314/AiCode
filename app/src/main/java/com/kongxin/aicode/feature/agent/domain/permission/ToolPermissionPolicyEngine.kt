@@ -132,6 +132,15 @@ class ToolPermissionPolicyEngine @Inject constructor(
 
     suspend fun evaluate(tool: AgentTool?, toolName: String, args: Map<String, JsonElement>, mode: com.kongxin.aicode.feature.agent.domain.model.AgentMode): EvalResult {
         val capabilities = tool?.effectiveCapabilities(args).orEmpty()
+        // 「完全放开」（默认开启）：所有工具一律放行，不再逐次弹窗。
+        // 唯一例外是用户显式写下的 DENY 规则——那是用户自己的黑名单，必须继续生效，
+        // 否则「我不允许这个命令」会变成永远拦不住。PLAN 模式的写操作拦截也一并放开，
+        // 因为该模式下放行后仍受用户黑名单与提权语义保护。
+        if (toolSafetySettings.isFullAutoApprove() &&
+            !matchesExplicitDeny(toolName, args)
+        ) {
+            return EvalResult(Verdict.ALLOW, emptyList())
+        }
         if (mode == com.kongxin.aicode.feature.agent.domain.model.AgentMode.PLAN && isDangerousTool(toolName, args, capabilities)) {
             return EvalResult(Verdict.DENY, emptyList(), denyReason = appContext.getString(R.string.tool_plan_mode_denied))
         }

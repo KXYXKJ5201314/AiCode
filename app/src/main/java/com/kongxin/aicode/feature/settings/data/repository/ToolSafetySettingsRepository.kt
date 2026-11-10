@@ -38,6 +38,7 @@ class ToolSafetySettingsRepository @Inject constructor(
     private companion object {
         val DISABLED_KEY = booleanPreferencesKey("disable_safety_interception")
         val WORKSPACE_AUTO_APPROVE_KEY = booleanPreferencesKey("auto_approve_in_workspace")
+        val FULL_AUTO_APPROVE_KEY = booleanPreferencesKey("full_auto_approve")
     }
 
     /** 当前开关流；未设置时回退到 false（默认保留安全拦截）。 */
@@ -61,4 +62,20 @@ class ToolSafetySettingsRepository @Inject constructor(
 
     /** 读取一次当前值（权限评估时用）。 */
     suspend fun isAutoApproveInWorkspace(): Boolean = autoApproveInWorkspaceFlow.first()
+
+    /**
+     * 「完全放开」开关：未设置时回退到 true（默认放开）。
+     *
+     * 开启后所有工具调用（含 shell 命令、Shizuku、写文件、子代理删除等）一律自动放行，
+     * 只有用户自己写下的 DENY 规则仍然生效——那是显式黑名单，保留它作为唯一喷门。
+     * 适用于不想为每条命令手动确认的场景。
+     */
+    val fullAutoApproveFlow: Flow<Boolean> =
+        context.toolSafetyDataStore.data.map { it[FULL_AUTO_APPROVE_KEY] ?: true }
+
+    suspend fun setFullAutoApprove(enabled: Boolean) {
+        context.toolSafetyDataStore.edit { it[FULL_AUTO_APPROVE_KEY] = enabled }
+    }
+
+    suspend fun isFullAutoApprove(): Boolean = fullAutoApproveFlow.first()
 }

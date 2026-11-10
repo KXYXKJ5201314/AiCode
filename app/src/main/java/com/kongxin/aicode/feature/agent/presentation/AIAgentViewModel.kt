@@ -398,8 +398,8 @@ class AIAgentViewModel @Inject constructor(
                 // _currentSessionId 也要作为输入：切换会话后「保留当前空会话」的规则会变，
                 // 不订阅它就会出现「切到某个空会话后它仍不出现在列表里」的错觉。
                 combine(
-                    chatSessionDao.getRootSessionsByWorkspace(path),
-                    chatSessionDao.getEmptyRootSessionIdsFlow(path),
+                    chatSessionDao.getAllRootSessionsGlobal(),
+                    chatSessionDao.getEmptyRootSessionIdsGlobalFlow(),
                     _currentSessionId
                 ) { all, emptyIds, currentId ->
                     val empty = emptyIds.toSet()
@@ -1246,7 +1246,17 @@ class AIAgentViewModel @Inject constructor(
         viewModelScope.launch {
             _currentWorkspace.collectLatest { path ->
                 if (path.isBlank()) return@collectLatest
-                val recent = sessionUseCase.getMostRecentSessionOfWorkspace(path)
+                // 若当前会话本身已绑定到该工作区，说明这次 path 变化正是「切到当前会话的工作区」
+                // 引起的（见 [syncWorkspaceToSession]），此时不能重选会话，否则会把用户刚点开的
+                // 会话顶掉，看起来又是一次「会话丢了」。
+                val cur = _currentSessionId.value
+                if (cur != null && sessionUseCase.getSessionById(cur)?.workspacePath == path) {
+                    return@collectLatest
+                }
+                // 跨工作区找最近会话：会话可各自绑定不同工作区（顶栏工作区按钮是会话级改绑），
+                // 只查全局当前工作区会漏掉绑在别处的会话，表现为「退出再打开会话没了」。
+                val recent = sessionUseCase.getMostRecentSessionGlobal()
+                    ?: sessionUseCase.getMostRecentSessionOfWorkspace(path)
                 // 「最近会话」只认真正用过的会话：还没发过消息的空壳不算历史，否则
                 // 每次启动都会把上一次留下的空会话当成「最近」然后一直复用它，
                 // 看起来像「启动后没有新会话」。空会话只在 NEED_NEW 分支里被复用。
@@ -1259,6 +1269,11 @@ class AIAgentViewModel @Inject constructor(
                     else -> createAndUpsertSession(path)
                 }
                 _currentSessionId.value = targetId
+                // 选中的会话可能绑定在别的工作区：把执行工作区跟过去，否则 AI 会在 default 里
+                // 读写文件，而会话自称绑定在 X，前后不一致。切过去后本 collect 会重新触发，
+                // 由上面的「当前会话已绑定该工作区」分支提前返回，不会递归。
+                sessionUseCase.getSessionById(targetId)?.workspacePath?.takeIf { it.isNotBlank() }
+                    ?.let { if (it != path) setWorkspace(it) }
 
                 // 异步回收多余的空会话（保留当前 targetId），在后台执行，不卡主线程与首帧渲染。
                 if (recent != null) {
@@ -2530,6 +2545,7 @@ class AIAgentViewModel @Inject constructor(
     fun setCurrentSessionId(id: String) {
         if (_currentSessionId.value == id) return
         _currentSessionId.value = id
+        syncWorkspaceToSession(id)
     }
 
     fun setSessionMode(mode: AgentMode) {
@@ -2933,6 +2949,21 @@ class AIAgentViewModel @Inject constructor(
     fun selectSession(id: String) {
         if (_currentSessionId.value == id) return
         _currentSessionId.value = id
+        syncWorkspaceToSession(id)
+    }
+
+    /**
+     * 把全局当前工作区同步到该会话绑定的目录。
+     *
+     * 会话可各自绑定不同工作区，而 AI 执行、文件树、projectRoot 都用全局 `_currentWorkspace`。
+     * 不同步的话，点开绑定在 X 的会话却仍在 default 里读写文件，属于功能错误。
+     */
+    private fun syncWorkspaceToSession(sessionId: String) {
+        viewModelScope.launch {
+            val path = sessionUseCase.getSessionById(sessionId)?.workspacePath?.takeIf { it.isNotBlank() }
+                ?: return@launch
+            if (path != _currentWorkspace.value) setWorkspace(path)
+        }
     }
 
     fun deleteSessions(ids: Set<String>) = viewModelScope.launch {
