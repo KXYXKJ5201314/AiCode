@@ -474,7 +474,7 @@
     <string name="chat_image_too_large">图片超过 %1$s，请压缩后重试</string>
     <string name="chat_attachment_uploading">正在上传 %1$d 个文件…</string>
     <string name="chat_uploaded_to">已上传到 %1$s</string>
-    <string name="chat_select_workspace_first">请先选择工作区</string>
+    <string name="chat_select_workspace_first">请先选择工作区（放模组或 dataS 的目录）</string>
     <string name="chat_read_file_failed">无法读取所选文件</string>
     <string name="chat_camera_file_failed">无法创建拍照临时文件</string>
     <string name="chat_workspace_unavailable">工作区不可用</string>
@@ -523,8 +523,8 @@
     <string name="chat_connecting_remote">正在连接远程服务器…</string>
     <string name="chat_remote_connect_failed">远程服务器连接失败，请检查设置</string>
     <string name="chat_no_remote_connection">未连接远程服务器</string>
-    <string name="chat_placeholder">有什么可以帮你的？</string>
-    <string name="chat_input_hint">描述你的需求，我来帮你编写、修改或解释代码</string>
+    <string name="chat_placeholder">空心农场模组AI助手</string>
+    <string name="chat_input_hint">描述你的需求，我帮你修改模拟农场模组、调校XML参数、编写脚本、排查模组报错</string>
 
     <!-- Agent Status -->
     <string name="agent_stopped_by_user">已被用户停止</string>
@@ -1811,11 +1811,11 @@
     <string name="workspace_confirm">确定</string>
     <string name="workspace_open">打开工作区</string>
     <string name="workspace_empty_hint">暂无工作区，点击「%1$s」创建一个</string>
-    <string name="workspace_empty_hint_local">暂无工作区，点击右上角「添加外部工作区」选择手机上的项目目录</string>
+    <string name="workspace_empty_hint_local">暂无工作区。点击右上角「添加外部工作区」，选一个放农场模组或 dataS 的目录就能开工</string>
     <string name="workspace_delete">删除工作区</string>
     <string name="workspace_delete_confirm">确定删除「%1$s」？该目录下的所有文件及该工作区的聊天记录都将被删除，且无法恢复。</string>
     <string name="workspace_new_workspace">新建工作区</string>
-    <string name="workspace_name_hint">例如 my-project</string>
+    <string name="workspace_name_hint">例如 我的农场模组</string>
     <string name="workspace_name_exists">已存在同名工作区</string>
     <string name="workspace_remote_root_create_failed">远程工作区目录创建失败，请检查路径与服务器权限</string>
     <string name="workspace_remote_default_create_failed">远程默认工作区创建失败，请检查服务器权限与磁盘空间</string>

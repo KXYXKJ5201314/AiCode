@@ -474,7 +474,7 @@
     <string name="chat_image_too_large">Image exceeds %1$s, please compress and retry</string>
     <string name="chat_attachment_uploading">Uploading %1$d files…</string>
     <string name="chat_uploaded_to">Uploaded to %1$s</string>
-    <string name="chat_select_workspace_first">Please select a workspace first</string>
+    <string name="chat_select_workspace_first">Select a workspace first (the folder holding your mods or dataS)</string>
     <string name="chat_read_file_failed">Cannot read the selected file</string>
     <string name="chat_camera_file_failed">Cannot create camera file</string>
     <string name="chat_workspace_unavailable">Workspace unavailable</string>
@@ -523,8 +523,8 @@
     <string name="chat_connecting_remote">Connecting to remote server…</string>
     <string name="chat_remote_connect_failed">Remote server connection failed, please check settings</string>
     <string name="chat_no_remote_connection">Not connected to remote server</string>
-    <string name="chat_placeholder">How can I help you?</string>
-    <string name="chat_input_hint">Describe what you need, and I\'ll help you write, modify, or explain code</string>
+    <string name="chat_placeholder">Kongxin Farming Mod AI Assistant</string>
+    <string name="chat_input_hint">Describe what you need — I will help you edit Farming Simulator mods, tune XML parameters, write scripts and fix mod errors</string>
 
     <!-- Agent Status -->
     <string name="agent_stopped_by_user">Stopped by user</string>
@@ -1812,11 +1812,11 @@
     <string name="workspace_confirm">Confirm</string>
     <string name="workspace_open">Open Workspace</string>
     <string name="workspace_empty_hint">No workspaces, tap %1$s to create one</string>
-    <string name="workspace_empty_hint_local">No workspaces yet. Tap "Add External Workspace" at the top right to pick a project folder on your device.</string>
+    <string name="workspace_empty_hint_local">No workspace yet. Tap "Add external workspace" at the top right and pick the folder holding your Farming Simulator mods or dataS</string>
     <string name="workspace_delete">Delete Workspace</string>
     <string name="workspace_delete_confirm">Delete "%1$s"? All files in this directory and this workspace\'s chats will be deleted and cannot be undone.</string>
     <string name="workspace_new_workspace">New Workspace</string>
-    <string name="workspace_name_hint">e.g. my-project</string>
+    <string name="workspace_name_hint">e.g. my-farm-mod</string>
     <string name="workspace_name_exists">A workspace with this name already exists</string>
     <string name="workspace_remote_root_create_failed">Failed to create the remote workspace directory. Check the path and server permissions.</string>
     <string name="workspace_remote_default_create_failed">Failed to create the default remote workspace. Check server permissions and disk space.</string>
