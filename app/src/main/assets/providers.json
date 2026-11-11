@@ -5,15 +5,33 @@
     "type": "OPENAI",
     "baseUrl": "https://sunapi.5201201314.top",
     "models": [],
-    "isRecommended": true,
-    "badge": "推荐",
+    "badge": null,
     "websiteUrl": "https://sunapi.5201201314.top/sign-up?aff=4UJy",
     "tags": [
-      "网络要求比较特殊，用户自行解决"
+      "网络要求比较特殊，用户自行解决",
+      "加群找管理员注册",
+      "速度一般"
     ],
     "backupBaseUrls": [
       "https://eocdn.sunapi.5201201314.top"
     ],
+    "autoSelectEndpoint": false
+  },
+  {
+    "id": "ai777",
+    "name": "777",
+    "type": "OPENAI",
+    "baseUrl": "https://77777777ai.com/v1",
+    "models": [],
+    "badge": null,
+    "websiteUrl": "https://77777777ai.com/register?aff=L3SRLCA3W4LZ",
+    "tags": [
+      "国内速度快",
+      "进群送额度15元",
+      "按 6.7 比例兑换人民币",
+      "较贵，按需充值"
+    ],
+    "backupBaseUrls": [],
     "autoSelectEndpoint": false
   }
 ]
