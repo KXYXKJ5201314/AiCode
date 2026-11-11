@@ -24,6 +24,12 @@ data class AIProviderEntity(
     /** 命中即触发多 Key 自动切换的 HTTP 状态码，以逗号分隔持久化；空串表示用默认值。 */
     val keySwitchStatusCodes: String = "",
     val baseUrl: String,
+
+    /** 备用接口地址，以换行分隔持久化（同 [models]）。配合 [autoSelectEndpoint] 使用。 */
+    val backupBaseUrls: String = "",
+
+    /** 是否按实测延迟自动选择接口地址。 */
+    val autoSelectEndpoint: Boolean = false,
     val defaultModel: String,
     /** 可用模型列表，以换行分隔持久化。 */
     val models: String = "",

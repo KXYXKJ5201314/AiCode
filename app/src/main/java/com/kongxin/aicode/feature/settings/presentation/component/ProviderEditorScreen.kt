@@ -165,6 +165,7 @@ import compose.icons.feathericons.Sliders
 import compose.icons.feathericons.Trash2
 import compose.icons.feathericons.X
 import com.kongxin.aicode.feature.agent.domain.model.ReasoningEffort
+import com.kongxin.aicode.feature.agent.domain.provider.EndpointLatencyProbe
 import com.kongxin.aicode.feature.agent.presentation.component.AdaptiveCardView
 import com.kongxin.aicode.feature.settings.domain.model.ProviderDashboardResult
 import com.kongxin.aicode.feature.settings.domain.model.ProviderDashboardState
@@ -207,6 +208,18 @@ fun ProviderEditorScreen(
         mutableStateOf(initialProvider?.keySwitchStatusCodes?.joinToString(",") ?: "")
     }
     var baseUrl by remember { mutableStateOf(initialProvider?.baseUrl ?: presetPrefill?.baseUrl ?: "") }
+    var backupBaseUrls by remember {
+        mutableStateOf(
+            initialProvider?.backupBaseUrls?.joinToString("\n")
+                ?: presetPrefill?.backupBaseUrls?.joinToString("\n")
+                ?: ""
+        )
+    }
+    var autoSelectEndpoint by remember {
+        mutableStateOf(initialProvider?.autoSelectEndpoint ?: presetPrefill?.autoSelectEndpoint ?: false)
+    }
+    var endpointProbeRunning by remember { mutableStateOf(false) }
+    var endpointProbeResults by remember { mutableStateOf<List<EndpointLatencyProbe.ProbeResult>>(emptyList()) }
     var useFullUrl by remember { mutableStateOf(initialProvider?.useFullUrl ?: false) }
     var useResponseApi by remember { mutableStateOf(initialProvider?.useResponseApi ?: false) }
     var anthropicCacheBreakpoints by remember { mutableStateOf(initialProvider?.anthropicCacheBreakpoints ?: true) }
@@ -318,6 +331,8 @@ fun ProviderEditorScreen(
         keyCooldownMinutes = keyCooldownMinutes,
         keySwitchStatusCodes = keySwitchStatusCodes.split(",").mapNotNull { it.trim().toIntOrNull() },
         baseUrl = baseUrl.ifBlank { defaultProviderBaseUrl(type) },
+        backupBaseUrls = backupBaseUrls.split("\n").map { it.trim() }.filter { it.isNotEmpty() },
+        autoSelectEndpoint = autoSelectEndpoint,
         useFullUrl = useFullUrl,
         isEnabled = isEnabled,
         defaultModel = initialProvider?.defaultModel ?: "",
@@ -526,6 +541,104 @@ fun ProviderEditorScreen(
                             // 避免用户对着空输入框不知道该填什么格式。
                             placeholder = stringResource(R.string.provider_base_url_placeholder)
                         )
+                        // ── 多接口地址：备用地址 + 按延迟自动选路 ──
+                        // 部分中转供应商会同时给主站和加速站，哪个快取决于当前网络，
+                        // 所以这里允许再填若干备用地址，并可选「按延迟自动选择」。
+                        AppTextField(
+                            value = backupBaseUrls,
+                            onValueChange = { backupBaseUrls = it },
+                            label = stringResource(R.string.provider_backup_base_urls),
+                            placeholder = stringResource(R.string.provider_backup_base_urls_placeholder),
+                            singleLine = false,
+                            maxLines = 4,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Spacing.lg, vertical = Spacing.xs)
+                        )
+                        ProviderSwitchRow(
+                            title = stringResource(R.string.provider_auto_select_endpoint),
+                            checked = autoSelectEndpoint,
+                            onCheckedChange = { autoSelectEndpoint = it },
+                            subtitle = stringResource(R.string.provider_auto_select_endpoint_desc)
+                        )
+                        if (backupBaseUrls.isNotBlank()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = Spacing.lg, vertical = Spacing.xs),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                TextButton(
+                                    onClick = {
+                                        if (endpointProbeRunning) return@TextButton
+                                        endpointProbeRunning = true
+                                        endpointProbeResults = emptyList()
+                                        scope.launch {
+                                            val config = currentConfig()
+                                            endpointProbeResults = viewModel.probeProviderEndpoints(config)
+                                            endpointProbeRunning = false
+                                        }
+                                    },
+                                    enabled = !endpointProbeRunning
+                                ) {
+                                    if (endpointProbeRunning) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(14.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                        Spacer(Modifier.width(6.dp))
+                                        Text(stringResource(R.string.provider_endpoint_probe_running))
+                                    } else {
+                                        Text(stringResource(R.string.provider_endpoint_probe_test))
+                                    }
+                                }
+                            }
+                            if (endpointProbeResults.isNotEmpty()) {
+                                val fastest = endpointProbeResults.firstOrNull { it.reachable }
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = Spacing.lg)
+                                        .padding(bottom = Spacing.xs)
+                                ) {
+                                    if (fastest == null) {
+                                        Text(
+                                            text = stringResource(R.string.provider_endpoint_probe_all_failed),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    } else {
+                                        Text(
+                                            text = stringResource(
+                                                R.string.provider_endpoint_probe_fastest,
+                                                fastest.baseUrl
+                                            ),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    endpointProbeResults.forEach { result ->
+                                        Text(
+                                            text = if (result.reachable) {
+                                                stringResource(
+                                                    R.string.provider_endpoint_probe_result_ok,
+                                                    result.baseUrl,
+                                                    result.latencyMs.toInt()
+                                                )
+                                            } else {
+                                                stringResource(
+                                                    R.string.provider_endpoint_probe_result_fail,
+                                                    result.baseUrl
+                                                )
+                                            },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
                         SettingsDivider()
                         SettingsRow(
                             icon = null,

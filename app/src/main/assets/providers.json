@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "id": "sunapi",
+    "name": "SunAPI",
+    "type": "OPENAI",
+    "baseUrl": "https://sunapi.5201201314.top",
+    "models": [],
+    "isRecommended": true,
+    "badge": "推荐",
+    "websiteUrl": "https://sunapi.5201201314.top/sign-up?aff=4UJy",
+    "tags": [
+      "网络要求比较特殊，用户自行解决"
+    ],
+    "backupBaseUrls": [
+      "https://eocdn.sunapi.5201201314.top"
+    ],
+    "autoSelectEndpoint": false
+  }
+]

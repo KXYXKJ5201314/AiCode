@@ -18,6 +18,18 @@ data class AIProviderConfig(
     /** 命中即触发多 Key 自动切换的 HTTP 状态码；留空时回退 [DEFAULT_KEY_SWITCH_STATUS_CODES]。 */
     val keySwitchStatusCodes: List<Int> = emptyList(),
     val baseUrl: String,
+
+    /**
+     * 备用接口地址（多个用换行分隔）。
+     *
+     * 部分中转供应商同时提供主站与加速站，不同网络环境下快慢不定。
+     * 配合 [autoSelectEndpoint] 使用时，请求前会实测各入口延迟并挑最快的那个。
+     */
+    val backupBaseUrls: List<String> = emptyList(),
+
+    /** 是否按实测延迟自动选择接口地址（需要 [backupBaseUrls] 非空才有意义）。 */
+    val autoSelectEndpoint: Boolean = false,
+
     val defaultModel: String,
     /** 该提供商已添加的可用模型列表（拉取或手动添加）。 */
     val models: List<String> = emptyList(),
@@ -81,6 +93,18 @@ data class AIProviderConfig(
 
     /** 拉取模型列表 / 连通性测试等无会话上下文的请求用第一个可用 Key。 */
     val firstUsableApiKey: String get() = effectiveApiKeys.firstOrNull()?.value ?: ""
+
+    /**
+     * 全部可参与选路的接口地址：主地址排第一，其后是备用地址（去重、去空、去尾部斜杠）。
+     * 顺序有意义——延迟相同或全部探测失败时优先用主地址。
+     */
+    fun endpointCandidates(): List<String> {
+        val main = baseUrl.trim().trimEnd('/')
+        val others = backupBaseUrls
+            .map { it.trim().trimEnd('/') }
+            .filter { it.isNotEmpty() && it != main }
+        return (listOf(main).filter { it.isNotEmpty() } + others).distinct()
+    }
 }
 
 /**
@@ -118,6 +142,10 @@ fun AIProviderConfig.sanitized(): AIProviderConfig = copy(
         .distinctBy { it.value },
     keySwitchStatusCodes = keySwitchStatusCodes.filter { it in 100..599 }.distinct(),
     baseUrl = baseUrl.stripAllWhitespace(),
+    backupBaseUrls = backupBaseUrls
+        .map { it.stripAllWhitespace().trimEnd('/') }
+        .filter { it.isNotEmpty() }
+        .distinct(),
     defaultModel = defaultModel.stripLineBreaks(),
     models = models.map { it.stripLineBreaks() }.filter { it.isNotEmpty() }.distinct(),
     selectedModel = selectedModel.stripLineBreaks(),

@@ -139,6 +139,8 @@ class AIProviderRepositoryImpl @Inject constructor(
             keySwitchStatusCodes = keySwitchStatusCodes
                 .split(",").mapNotNull { it.trim().toIntOrNull() }.distinct(),
             baseUrl = baseUrl,
+            backupBaseUrls = backupBaseUrls.split("\n").map { it.trim() }.filter { it.isNotEmpty() },
+            autoSelectEndpoint = autoSelectEndpoint,
             defaultModel = defaultModel,
             models = modelList,
             selectedModel = selectedModel.ifBlank { defaultModel },
@@ -174,6 +176,8 @@ class AIProviderRepositoryImpl @Inject constructor(
             keyCooldownMinutes = keyCooldownMinutes,
             keySwitchStatusCodes = keySwitchStatusCodes.joinToString(","),
             baseUrl = baseUrl,
+            backupBaseUrls = backupBaseUrls.joinToString("\n"),
+            autoSelectEndpoint = autoSelectEndpoint,
             useFullUrl = useFullUrl,
             defaultModel = defaultModel,
             models = models.joinToString("\n"),

@@ -139,6 +139,10 @@ data class ProviderDto(
     val type: String,
     val apiKey: String,
     val baseUrl: String,
+    /** 备用接口地址（换行分隔）；null 表示旧备份无此字段，导入时回退空串。 */
+    val backupBaseUrls: String? = null,
+    /** 是否按延迟自动选择接口地址；null 表示旧备份无此字段，导入时回退 false。 */
+    val autoSelectEndpoint: Boolean? = null,
     val defaultModel: String,
     val models: String = "",
     val selectedModel: String = "",

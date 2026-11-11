@@ -1,9 +1,6 @@
 package com.kongxin.aicode.feature.settings.data.local
 
 import android.content.Context
-import com.kongxin.aicode.core.net.RepoDataFetcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -25,69 +22,43 @@ data class ProviderPreset(
     /** 供应商官网或推广注册链接 */
     val websiteUrl: String? = null,
     /** 特性/福利标签列表（如 ["注册送10元"]） */
-    val tags: List<String> = emptyList()
+    val tags: List<String> = emptyList(),
+
+    /** 备用接口地址，选中后一并填入「备用接口地址」输入框。 */
+    val backupBaseUrls: List<String> = emptyList(),
+
+    /** 是否默认勾选「按延迟自动选择」。 */
+    val autoSelectEndpoint: Boolean = false
 )
 
 /**
- * 官方及自定义 provider 预设库：
- * 采用双轨机制：
- * 1. 启动时由后台异步预热拉取（[refreshFromNetworkIfStale]），写磁盘并更新内存 [cached]；
- * 2. 任何 UI 读取（[loadOfficial]）均同步从「内存 -> 磁盘已下载文件 -> 内置 assets」读取，
- *    绝对不发起网络请求，毫秒级直接返回。
+ * provider 预设库：
+ * 数据只有一处来源——`assets/providers.json`（内置），UI 读取（[loadOfficial]）同步返回，零网络请求。
+ * 上游原有的「启动拉取远程 providers.json + 磁盘缓存」两条路已全部切掉，避免覆盖本仓库的预置。
  */
 object ProviderPresetLibrary {
     const val PROVIDERS_ASSET_FILE_NAME = "providers.json"
-    const val REMOTE_PROVIDERS_PATH = "data/providers.json"
 
     /**
-     * 是否启用官方预置供应商列表。
+     * 是否启用预置供应商列表。
      *
-     * 本仓库已移除全部预置供应商（[PROVIDERS_ASSET_FILE_NAME] 为空数组），只保留「自定义
-     * 供应商」一条路径。置 false 会同时切断三处来源，否则删掉 assets 也会被下面两条
-     * 兜底覆盖回来：
-     * 1. 启动时的远程预置拉取（[refreshFromNetworkIfStale]）；
-     * 2. 磁盘缓存文件（[loadOfficial] 的第 1 步）——旧版本下载过的 providers.json
-     *    会一直留在用户设备上，不跳过它的话老用户删不干净。
+     * 本仓库的预置完全由 `assets/providers.json` 内置（目前只有 SunAPI 一条），
+     * 不参与远程拉取，也不读磁盘缓存——上游 data/providers.json 是一整批官方供应商，
+     * 一旦拉下来会把这里的预置覆盖掉。
      */
-    private const val PRESET_PROVIDERS_ENABLED = false
+    private const val PRESET_PROVIDERS_ENABLED = true
 
     private val json = Json { ignoreUnknownKeys = true }
 
     @Volatile
     private var cached: List<ProviderPreset>? = null
 
-    @Volatile
-    private var refreshAttemptedThisProcess = false
-
     /**
-     * 仅供 App 启动阶段（AIEditorApp）在后台协程异步调用：
-     * 走 RepoDataFetcher 测活拉取最新配置并持久化，失败完全静默。
+     * 仅供 App 启动阶段（AIEditorApp）在后台协程异步调用。
+     *
+     * 现在预置列表完全内置，这里保留空实现只是为了不改动调用点。
      */
-    suspend fun refreshFromNetworkIfStale(context: Context) = withContext(Dispatchers.IO) {
-        if (!PRESET_PROVIDERS_ENABLED) return@withContext
-        if (refreshAttemptedThisProcess) return@withContext
-        refreshAttemptedThisProcess = true
-
-        val fetcher = RepoDataFetcher(context)
-        val remoteResult = runCatching { fetcher.fetch(REMOTE_PROVIDERS_PATH) }.getOrNull()
-        val remoteContent = when (remoteResult) {
-            is RepoDataFetcher.FetchResult.Success -> remoteResult.content
-            is RepoDataFetcher.FetchResult.FallbackDiskCache -> remoteResult.content
-            else -> null
-        }
-
-        if (!remoteContent.isNullOrBlank()) {
-            val parsedRemote = runCatching {
-                json.decodeFromString<List<ProviderPreset>>(remoteContent)
-            }.getOrNull()
-            if (!parsedRemote.isNullOrEmpty()) {
-                val sorted = parsedRemote.sortedWith(
-                    compareByDescending<ProviderPreset> { it.isRecommended }
-                        .thenBy { it.name.lowercase() }
-                )
-                cached = sorted
-            }
-        }
+    suspend fun refreshFromNetworkIfStale(@Suppress("UNUSED_PARAMETER") context: Context) {
     }
 
     /**
@@ -96,29 +67,10 @@ object ProviderPresetLibrary {
      * 纯本地 IO，绝对不发任何网络请求，秒级返回。
      */
     fun loadOfficial(context: Context): List<ProviderPreset> {
-        // 预置供应商已移除：直接返回空列表，跳过磁盘缓存与 assets。
-        // 磁盘上可能还留着旧版本下载的 providers.json，必须一并跳过，否则删不干净。
         if (!PRESET_PROVIDERS_ENABLED) return emptyList()
-
         cached?.let { return it }
-
-        // 1. 尝试直接读取本地磁盘缓存文件（由 RepoDataFetcher 写入）
-        val diskContent = RepoDataFetcher(context).readLocalCache(REMOTE_PROVIDERS_PATH)
-        if (!diskContent.isNullOrBlank()) {
-            val parsed = runCatching {
-                json.decodeFromString<List<ProviderPreset>>(diskContent)
-            }.getOrNull()
-            if (!parsed.isNullOrEmpty()) {
-                val sorted = parsed.sortedWith(
-                    compareByDescending<ProviderPreset> { it.isRecommended }
-                        .thenBy { it.name.lowercase() }
-                )
-                cached = sorted
-                return sorted
-            }
-        }
-
-        // 2. 兜底读取内置 assets（必定存在，必定瞬间返回）
+        // 只读 assets：磁盘缓存里可能留着旧版本从上游拉下来的整批官方供应商，
+        // 读它会把本仓库唯一的 SunAPI 预置顶掉。
         val fallback = loadFromAssets(context)
         cached = fallback
         return fallback

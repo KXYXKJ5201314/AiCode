@@ -68,6 +68,7 @@ class ViewImageTool @Inject constructor(
     private val openAIApi: OpenAIApi,
     private val anthropicApi: AnthropicApi,
     private val geminiApi: GeminiApi,
+    private val endpointLatencyProbe: com.kongxin.aicode.feature.agent.domain.provider.EndpointLatencyProbe,
     @param:ApplicationContext private val appContext: Context
 ) : AbstractContextualTool() {
     override val name = "viewImage"
@@ -339,7 +340,7 @@ class ViewImageTool @Inject constructor(
             }
         }
         provider.apiKey = config.apiKey
-        provider.baseUrl = config.baseUrl
+        provider.baseUrl = endpointLatencyProbe.resolveBaseUrl(config)
         provider.model = config.effectiveModel
         provider.useFullUrl = config.useFullUrl
         provider.useResponseApi = config.useResponseApi

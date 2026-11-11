@@ -400,6 +400,7 @@ class SettingsViewModel @Inject constructor(
     private val apkDownloader: ApkDownloader,
     private val apkVerifier: ApkVerifier,
     private val providerDashboardRunner: ProviderDashboardRunner,
+    private val endpointLatencyProbe: com.kongxin.aicode.feature.agent.domain.provider.EndpointLatencyProbe,
     private val terminalSettingsRepository: TerminalSettingsRepository,
     private val proxySettingsRepository: ProxySettingsRepository
 ) : ViewModel() {
@@ -439,6 +440,16 @@ class SettingsViewModel @Inject constructor(
     fun setTerminalFontPath(path: String) {
         viewModelScope.launch { terminalSettingsRepository.setFontPath(path) }
     }
+
+    /**
+     * 实测某个提供商全部接口地址（主地址 + 备用地址）的延迟。
+     *
+     * 供提供商编辑页「测试各地址延迟」按钮使用；结果按延迟升序返回，全部失败时返回空列表。
+     */
+    suspend fun probeProviderEndpoints(
+        config: AIProviderConfig
+    ): List<com.kongxin.aicode.feature.agent.domain.provider.EndpointLatencyProbe.ProbeResult> =
+        endpointLatencyProbe.probeNow(config).sortedBy { if (it.reachable) it.latencyMs else Long.MAX_VALUE }
 
     // ── 全局代理 ──
 

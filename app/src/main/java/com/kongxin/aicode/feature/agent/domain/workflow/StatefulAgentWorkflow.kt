@@ -118,6 +118,7 @@ class StatefulAgentWorkflow @Inject constructor(
     private val checkpointManager: CheckpointManager,
     private val llmCallRecordDao: LlmCallRecordDao,
     private val keyRotator: ProviderKeyRotator,
+    private val endpointLatencyProbe: com.kongxin.aicode.feature.agent.domain.provider.EndpointLatencyProbe,
     private val agentNotificationCenter: AgentNotificationCenter,
     private val eventInjector: AgentEventInjector,
     private val fileAccess: FileAccessProvider,
@@ -313,7 +314,7 @@ class StatefulAgentWorkflow @Inject constructor(
                 null
             }
         provider.keySwitcher = keySwitcher
-        provider.baseUrl = config.baseUrl
+        provider.baseUrl = endpointLatencyProbe.resolveBaseUrl(config)
         provider.model = config.effectiveModel
         provider.useFullUrl = config.useFullUrl
         provider.useResponseApi = config.useResponseApi

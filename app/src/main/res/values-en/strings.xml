@@ -1503,6 +1503,16 @@
     <string name="provider_api_key">API Key</string>
     <string name="provider_base_url">Base URL</string>
     <string name="provider_base_url_placeholder">e.g. https://api.deepseek.com/v1</string>
+    <string name="provider_backup_base_urls">Backup endpoints</string>
+    <string name="provider_backup_base_urls_placeholder">One per line, e.g. https://cdn.example.com</string>
+    <string name="provider_auto_select_endpoint">Auto-pick fastest</string>
+    <string name="provider_auto_select_endpoint_desc">Probe endpoints before each request and use the fastest; falls back to the main one if all fail</string>
+    <string name="provider_endpoint_probe_test">Test endpoint latency</string>
+    <string name="provider_endpoint_probe_running">Measuring…</string>
+    <string name="provider_endpoint_probe_result_ok">%1$s · %2$dms</string>
+    <string name="provider_endpoint_probe_result_fail">%1$s · unreachable</string>
+    <string name="provider_endpoint_probe_fastest">Fastest: %1$s</string>
+    <string name="provider_endpoint_probe_all_failed">All endpoints unreachable, check your network or URLs</string>
     <string name="provider_api_key_required">Please enter an API Key first</string>
     <string name="provider_fetch_missing_fields">Response is missing the list field</string>
     <string name="provider_fetch_missing_fields_detail">Response missing list field (models or data): %1$s</string>

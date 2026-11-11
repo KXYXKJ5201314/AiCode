@@ -1503,6 +1503,16 @@
     <string name="provider_api_key">API Key</string>
     <string name="provider_base_url">Base URL</string>
     <string name="provider_base_url_placeholder">例如 https://api.deepseek.com/v1</string>
+    <string name="provider_backup_base_urls">备用接口地址</string>
+    <string name="provider_backup_base_urls_placeholder">每行一个，例如 https://cdn.example.com</string>
+    <string name="provider_auto_select_endpoint">按延迟自动选择</string>
+    <string name="provider_auto_select_endpoint_desc">请求前实测各地址，自动用最快的那个；都失败时回退主地址</string>
+    <string name="provider_endpoint_probe_test">测试各地址延迟</string>
+    <string name="provider_endpoint_probe_running">正在测速…</string>
+    <string name="provider_endpoint_probe_result_ok">%1$s · %2$dms</string>
+    <string name="provider_endpoint_probe_result_fail">%1$s · 不可用</string>
+    <string name="provider_endpoint_probe_fastest">最快：%1$s</string>
+    <string name="provider_endpoint_probe_all_failed">全部地址都连不上，请检查网络或地址</string>
     <string name="provider_api_key_required">请先填写 API Key</string>
     <string name="provider_fetch_missing_fields">响应缺少列表字段</string>
     <string name="provider_fetch_missing_fields_detail">响应缺少列表字段 (models 或 data): %1$s</string>
